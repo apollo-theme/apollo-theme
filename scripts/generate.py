@@ -13,15 +13,15 @@ PALETTE_PATH = ROOT / "palette" / "apollo.json"
 OUTPUT_PATH = ROOT / "ApolloTheme.psm1"
 MANIFEST_PATH = ROOT / "ApolloTheme.psd1"
 PROFILE_PATH = ROOT / "ApolloTheme.profile.ps1"
-PALETTE_SHA256 = "550f8c36cf4ef6ac99551541d1fe9554f77d563fa1e7c129a6a82583321d61ef"
+PALETTE_SHA256 = "a2989522f9369f1e46f13e5eda3a2333b8665228c82356795c8ec277443d3811"
 
 
 def load_palette() -> dict:
-    raw = PALETTE_PATH.read_bytes()
-    digest = hashlib.sha256(raw).hexdigest()
+    palette = json.loads(PALETTE_PATH.read_text(encoding="utf-8"))
+    normalized = json.dumps(palette, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    digest = hashlib.sha256(normalized).hexdigest()
     if digest != PALETTE_SHA256:
-        raise ValueError(f"palette snapshot hash mismatch: {digest}")
-    palette = json.loads(raw)
+        raise ValueError(f"palette snapshot semantic hash mismatch: {digest}")
     if palette.get("id") != "apollo" or palette.get("schemaVersion") != 1:
         raise ValueError("unsupported Apollo palette snapshot")
     return palette
