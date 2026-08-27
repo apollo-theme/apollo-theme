@@ -1,0 +1,11 @@
+Apollo Theme palette lineage
+
+Apollo Theme adapts Gruvbox Dark Hard, originally created by Pavel Pertsev and
+released under the MIT License. Its terminal mapping and near-black canvas are
+based on the Modified Gruvbox Dark Hard theme shipped by SonicTerm.
+
+Gruvbox: https://github.com/morhetz/gruvbox
+SonicTerm source: https://github.com/D0n9X1n/SonicTerm/blob/main/assets/themes/wezterm.toml
+
+The name "Apollo Theme" in this project does not refer to the unrelated
+46-color pixel-art palette also named Apollo.

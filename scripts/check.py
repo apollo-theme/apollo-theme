@@ -50,6 +50,43 @@ def check_palette() -> None:
         raise ValueError("restricted bright black no longer needs its usage constraint")
 
 
+def check_submodules() -> None:
+    gitmodules = ROOT / ".gitmodules"
+    if not gitmodules.exists():
+        raise FileNotFoundError(".gitmodules is missing")
+    output = subprocess.run(
+        ["git", "config", "--file", str(gitmodules), "--get-regexp", r"^submodule\..*\.(path|url)$"],
+        cwd=ROOT,
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout
+    entries: dict[str, dict[str, str]] = {}
+    for line in output.splitlines():
+        key, value = line.split(maxsplit=1)
+        prefix, field = key.rsplit(".", 1)
+        entries.setdefault(prefix, {})[field] = value
+    paths = {entry.get("path") for entry in entries.values()}
+    if paths != set(REPOSITORIES):
+        missing = sorted(set(REPOSITORIES) - paths)
+        extra = sorted(paths - set(REPOSITORIES))
+        raise ValueError(f"submodule paths differ: missing={missing}, extra={extra}")
+    for entry in entries.values():
+        path = entry["path"]
+        expected_url = f"https://github.com/apollo-theme/{path}.git"
+        if entry.get("url") != expected_url:
+            raise ValueError(f"{path}: expected submodule URL {expected_url}")
+    states = subprocess.run(
+        ["git", "submodule", "status", "--recursive"],
+        cwd=ROOT,
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.splitlines()
+    if len(states) != len(REPOSITORIES) or any(line.startswith(("-", "+", "U")) for line in states):
+        raise ValueError("submodules are missing, conflicted, or not at recorded commits")
+
+
 def check_repository(repository: str) -> None:
     directory = ROOT / repository
     required = ("README.md", "CLAUDE.md", "LICENSE", "palette/apollo.json", "scripts/generate.py", "scripts/check.py")
@@ -67,6 +104,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate the Apollo palette and application repositories")
     parser.add_argument("--repo", choices=REPOSITORIES, action="append", help="limit validation to a repository")
     args = parser.parse_args()
+    check_submodules()
     check_palette()
     for repository in tuple(args.repo or REPOSITORIES):
         check_repository(repository)

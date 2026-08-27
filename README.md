@@ -19,7 +19,7 @@ This repository is the source of truth and synchronized catalog. Each applicatio
 | Success | `#b8bb26` |
 | Information | `#83a598` |
 
-The canonical data is [`palette/apollo.json`](palette/apollo.json). It records the exact SonicTerm source revision and terminal color order. This project is not based on the unrelated 46-color pixel-art palette also named Apollo.
+The canonical data is [`palette/apollo.json`](palette/apollo.json). It records the exact SonicTerm source revision and terminal color order. See [`NOTICE`](NOTICE) for Gruvbox and SonicTerm lineage. This project is not based on the unrelated 46-color pixel-art palette also named Apollo.
 
 ## Applications
 
