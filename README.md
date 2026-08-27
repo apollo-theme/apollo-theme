@@ -55,6 +55,12 @@ python3 scripts/check.py
 python3 -m unittest discover -s tests -v
 ```
 
+On a development machine with the target applications installed, run every child checker too:
+
+```sh
+python3 scripts/check.py --native
+```
+
 To refresh an existing checkout:
 
 ```sh

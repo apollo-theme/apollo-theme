@@ -39,11 +39,12 @@ python3 scripts/generate.py --repo vscode-apollo-theme
 python3 scripts/generate.py --check --repo vscode-apollo-theme
 ```
 
-Run aggregate validation, one child gate, or the parent tests:
+Run portable aggregate validation, one child gate, app-native checks, or the parent tests:
 
 ```sh
 python3 scripts/check.py
 python3 scripts/check.py --repo vscode-apollo-theme
+python3 scripts/check.py --native
 python3 -m unittest discover -s tests -v
 ```
 
@@ -53,7 +54,7 @@ Run a single parent test:
 python3 -m unittest tests.test_palette.PaletteTests.test_terminal_slots -v
 ```
 
-Each child `CLAUDE.md` documents its native lint, packaging, application smoke test, and single-test command. Run those commands inside the child when its artifact or mapping changes; the root gate verifies cross-repository palette identity and delegates the portable child checks.
+Each child `CLAUDE.md` documents its native lint, packaging, application smoke test, and single-test command. Run those commands inside the child when its artifact or mapping changes. The default root gate is portable: it verifies submodules, palette identity, and generated-file drift. Add `--native` only on a machine with the relevant applications installed; child CI owns the authoritative native checks.
 
 ## Canonical palette invariants
 

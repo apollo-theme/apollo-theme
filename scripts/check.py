@@ -87,7 +87,7 @@ def check_submodules() -> None:
         raise ValueError("submodules are missing, conflicted, or not at recorded commits")
 
 
-def check_repository(repository: str) -> None:
+def check_repository(repository: str, native: bool) -> None:
     directory = ROOT / repository
     required = ("README.md", "CLAUDE.md", "LICENSE", "palette/apollo.json", "scripts/generate.py", "scripts/check.py")
     missing = [path for path in required if not (directory / path).exists()]
@@ -97,18 +97,20 @@ def check_repository(repository: str) -> None:
     if snapshot != load_palette():
         raise ValueError(f"{repository}: palette snapshot differs from canonical palette")
     subprocess.run([sys.executable, "scripts/generate.py", "--check"], cwd=directory, check=True)
-    subprocess.run([sys.executable, "scripts/check.py"], cwd=directory, check=True)
+    if native:
+        subprocess.run([sys.executable, "scripts/check.py"], cwd=directory, check=True)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate the Apollo palette and application repositories")
     parser.add_argument("--repo", choices=REPOSITORIES, action="append", help="limit validation to a repository")
+    parser.add_argument("--native", action="store_true", help="also run each selected child's app-specific checker")
     args = parser.parse_args()
     check_submodules()
     check_palette()
     for repository in tuple(args.repo or REPOSITORIES):
-        check_repository(repository)
-        print(f"{repository}: valid")
+        check_repository(repository, args.native)
+        print(f"{repository}: valid{' with native checks' if args.native else ''}")
     return 0
 
 
