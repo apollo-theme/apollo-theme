@@ -89,10 +89,13 @@ def check_submodules() -> None:
 
 def check_repository(repository: str, native: bool) -> None:
     directory = ROOT / repository
-    required = ("README.md", "CLAUDE.md", "LICENSE", "palette/apollo.json", "scripts/generate.py", "scripts/check.py")
+    required = (".gitattributes", "README.md", "CLAUDE.md", "LICENSE", "palette/apollo.json", "scripts/generate.py", "scripts/check.py")
     missing = [path for path in required if not (directory / path).exists()]
     if missing:
         raise FileNotFoundError(f"{repository}: missing {', '.join(missing)}")
+    attributes = (directory / ".gitattributes").read_text(encoding="utf-8").splitlines()
+    if "* text=auto eol=lf" not in attributes:
+        raise ValueError(f"{repository}: .gitattributes must preserve LF across Windows checkouts")
     snapshot = json.loads((directory / "palette" / "apollo.json").read_text(encoding="utf-8"))
     if snapshot != load_palette():
         raise ValueError(f"{repository}: palette snapshot differs from canonical palette")
