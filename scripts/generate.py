@@ -28,8 +28,12 @@ def toml_array(values: list[str]) -> str:
     return "[" + ", ".join(quoted(value) for value in values) + "]"
 
 
+def rgba(color: str, alpha: float) -> str:
+    red, green, blue = (int(color[offset : offset + 2], 16) for offset in (1, 3, 5))
+    return f"rgba({red}, {green}, {blue}, {alpha:g})"
+
+
 def render(palette: dict[str, Any]) -> str:
-    colors = palette["colors"]
     terminal = palette["terminal"]
     lines = [
         "# Generated from palette/apollo.json by scripts/generate.py; do not edit.",
@@ -39,8 +43,8 @@ def render(palette: dict[str, Any]) -> str:
         f'cursor_fg = {quoted(terminal["cursorText"])}',
         f'cursor_bg = {quoted(terminal["cursor"])}',
         f'cursor_border = {quoted(terminal["cursor"])}',
-        f'selection_fg = {quoted(colors["foregroundSecondary"])}',
-        f'selection_bg = {quoted(terminal["selection"]["color"])}',
+        'selection_fg = "none"',
+        f'selection_bg = {quoted(rgba(terminal["selection"]["color"], terminal["selection"]["alpha"]))}',
         f'ansi = {toml_array(terminal["ansi"])}',
         f'brights = {toml_array(terminal["bright"])}',
         "",

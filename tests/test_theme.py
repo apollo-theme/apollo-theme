@@ -35,7 +35,8 @@ class WezTermThemeTests(unittest.TestCase):
         self.assertEqual(colors["cursor_bg"], terminal["cursor"])
         self.assertEqual(colors["cursor_border"], terminal["cursor"])
         self.assertEqual(colors["cursor_fg"], terminal["cursorText"])
-        self.assertEqual(colors["selection_bg"], terminal["selection"]["color"])
+        self.assertEqual(colors["selection_fg"], "none")
+        self.assertEqual(colors["selection_bg"], "rgba(60, 56, 54, 0.5)")
         self.assertEqual(colors["ansi"], terminal["ansi"])
         self.assertEqual(colors["brights"], terminal["bright"])
 

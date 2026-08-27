@@ -75,20 +75,21 @@ def validate_scheme(scheme: dict[str, Any], palette: dict[str, Any]) -> None:
     require(metadata == {"name": "Apollo", "author": "D0n9X1n", "origin_url": REPOSITORY_URL}, "WezTerm metadata drift")
 
     terminal = palette["terminal"]
-    canonical = palette["colors"]
     expected = {
         "foreground": terminal["foreground"],
         "background": terminal["background"],
         "cursor_fg": terminal["cursorText"],
         "cursor_bg": terminal["cursor"],
         "cursor_border": terminal["cursor"],
-        "selection_fg": canonical["foregroundSecondary"],
-        "selection_bg": terminal["selection"]["color"],
+        "selection_fg": "none",
+        "selection_bg": "rgba(60, 56, 54, 0.5)",
         "ansi": terminal["ansi"],
         "brights": terminal["bright"],
     }
     require(colors == expected, "WezTerm color scheme drift")
     for name, value in colors.items():
+        if name in {"selection_fg", "selection_bg"}:
+            continue
         values = value if isinstance(value, list) else [value]
         for index, color in enumerate(values):
             validate_hex(color, f"colors.{name}[{index}]")

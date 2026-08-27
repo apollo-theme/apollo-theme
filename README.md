@@ -27,7 +27,7 @@ Select another `color_scheme`, reload, then remove the copied `apollo.toml`.
 
 ## Visual check
 
-Print ANSI colors 0–15, move the cursor over text, and select text. Confirm the `#141617` canvas, warm foreground, yellow cursor, grey-brown selection, and the exact normal/bright arrays in `palette/apollo.json`. Automated checks validate the TOML and installed WezTerm can load it, but rendered pixels still require this manual check.
+Print ANSI colors 0–15, move the cursor over text, and select differently colored cells. Confirm the `#141617` canvas, warm foreground, yellow cursor, a 50%-alpha grey-brown selection that preserves each cell's foreground, and the exact normal/bright arrays in `palette/apollo.json`. Automated checks validate the TOML and installed WezTerm can load it, but rendered pixels still require this manual check.
 
 ## Development
 
