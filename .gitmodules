@@ -1,0 +1,51 @@
+[submodule "firefox-apollo-theme"]
+	path = firefox-apollo-theme
+	url = https://github.com/apollo-theme/firefox-apollo-theme.git
+[submodule "sonicterm-apollo-theme"]
+	path = sonicterm-apollo-theme
+	url = https://github.com/apollo-theme/sonicterm-apollo-theme.git
+[submodule "wezterm-apollo-theme"]
+	path = wezterm-apollo-theme
+	url = https://github.com/apollo-theme/wezterm-apollo-theme.git
+[submodule "iterm2-apollo-theme"]
+	path = iterm2-apollo-theme
+	url = https://github.com/apollo-theme/iterm2-apollo-theme.git
+[submodule "apple-terminal-apollo-theme"]
+	path = apple-terminal-apollo-theme
+	url = https://github.com/apollo-theme/apple-terminal-apollo-theme.git
+[submodule "alacritty-apollo-theme"]
+	path = alacritty-apollo-theme
+	url = https://github.com/apollo-theme/alacritty-apollo-theme.git
+[submodule "windows-terminal-apollo-theme"]
+	path = windows-terminal-apollo-theme
+	url = https://github.com/apollo-theme/windows-terminal-apollo-theme.git
+[submodule "vscode-apollo-theme"]
+	path = vscode-apollo-theme
+	url = https://github.com/apollo-theme/vscode-apollo-theme.git
+[submodule "visual-studio-apollo-theme"]
+	path = visual-studio-apollo-theme
+	url = https://github.com/apollo-theme/visual-studio-apollo-theme.git
+[submodule "vim-apollo-theme"]
+	path = vim-apollo-theme
+	url = https://github.com/apollo-theme/vim-apollo-theme.git
+[submodule "nvim-apollo-theme"]
+	path = nvim-apollo-theme
+	url = https://github.com/apollo-theme/nvim-apollo-theme.git
+[submodule "xcode-apollo-theme"]
+	path = xcode-apollo-theme
+	url = https://github.com/apollo-theme/xcode-apollo-theme.git
+[submodule "tmux-apollo-theme"]
+	path = tmux-apollo-theme
+	url = https://github.com/apollo-theme/tmux-apollo-theme.git
+[submodule "rmux-apollo-theme"]
+	path = rmux-apollo-theme
+	url = https://github.com/apollo-theme/rmux-apollo-theme.git
+[submodule "powershell-apollo-theme"]
+	path = powershell-apollo-theme
+	url = https://github.com/apollo-theme/powershell-apollo-theme.git
+[submodule "bat-apollo-theme"]
+	path = bat-apollo-theme
+	url = https://github.com/apollo-theme/bat-apollo-theme.git
+[submodule "eza-apollo-theme"]
+	path = eza-apollo-theme
+	url = https://github.com/apollo-theme/eza-apollo-theme.git
