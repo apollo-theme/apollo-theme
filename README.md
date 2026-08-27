@@ -33,7 +33,7 @@ Remove-Module ApolloTheme
 Remove-Item -Recurse -Force "$HOME/.config/powershell-apollo-theme"
 ```
 
-Calling `Enable-ApolloTheme` repeatedly does not replace the saved pre-Apollo values. Calling `Disable-ApolloTheme` when inactive is safe.
+Calling `Enable-ApolloTheme` repeatedly does not replace the saved pre-Apollo values. Calling `Disable-ApolloTheme` when inactive is safe. Apollo detects the color properties exposed by the installed PSReadLine version, so PowerShell 7.2's bundled PSReadLine works without newer list-prediction properties.
 
 ## Visual check
 

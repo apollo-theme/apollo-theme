@@ -30,12 +30,31 @@ $properties = @{
     ListPrediction = 'ListPredictionColor'; ListPredictionSelected = 'ListPredictionSelectedColor'
     ListPredictionTooltip = 'ListPredictionTooltipColor'
 }
-foreach ($entry in $properties.GetEnumerator()) { $before[$entry.Key] = $options.($entry.Value) }
+$supportedProperties = @{}
+foreach ($entry in $properties.GetEnumerator()) {
+    if ($null -ne $options.PSObject.Properties[$entry.Value]) {
+        $supportedProperties[$entry.Key] = $entry.Value
+        $before[$entry.Key] = $options.($entry.Value)
+    }
+}
+
+$legacyOptions = [pscustomobject]@{
+    DefaultTokenColor = 'default'
+    CommentColor = 'comment'
+}
+$legacyProperties = & (Get-Module ApolloTheme) {
+    param($Options)
+    Get-ApolloSupportedColorProperties -Options $Options
+} $legacyOptions
+Assert-Equal $legacyProperties.Count 2 'Legacy PSReadLine options must filter unsupported properties.'
+Assert-Equal $legacyProperties.Default 'DefaultTokenColor' 'Legacy default color must remain supported.'
+Assert-Equal $legacyProperties.Comment 'CommentColor' 'Legacy comment color must remain supported.'
+
 Enable-ApolloTheme
 Assert-Equal (Get-PSReadLineOption).DefaultTokenColor "`e[38;2;207;188;151m" 'Enable must apply Apollo.'
 Disable-ApolloTheme
 $options = Get-PSReadLineOption
-foreach ($entry in $properties.GetEnumerator()) {
+foreach ($entry in $supportedProperties.GetEnumerator()) {
     Assert-Equal $options.($entry.Value) $before[$entry.Key] "Disable must restore $($entry.Key)."
 }
 Disable-ApolloTheme

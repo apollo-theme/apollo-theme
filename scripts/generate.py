@@ -101,6 +101,22 @@ function Get-ApolloPSReadLineColors {{
     }}
 }}
 
+function Get-ApolloSupportedColorProperties {{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object] $Options
+    )
+
+    $supported = @{{}}
+    foreach ($entry in $script:ApolloColorProperties.GetEnumerator()) {{
+        if ($null -ne $Options.PSObject.Properties[$entry.Value]) {{
+            $supported[$entry.Key] = $entry.Value
+        }}
+    }}
+    return $supported
+}}
+
 function Enable-ApolloTheme {{
     [CmdletBinding()]
     param()
@@ -109,15 +125,24 @@ function Enable-ApolloTheme {{
         Import-Module PSReadLine -ErrorAction Stop
     }}
 
+    $options = Get-PSReadLineOption
+    $supportedProperties = Get-ApolloSupportedColorProperties -Options $options
+    $colors = Get-ApolloPSReadLineColors
+
     if ($null -eq $script:ApolloPreviousColors) {{
-        $options = Get-PSReadLineOption
         $script:ApolloPreviousColors = @{{}}
-        foreach ($entry in $script:ApolloColorProperties.GetEnumerator()) {{
+        foreach ($entry in $supportedProperties.GetEnumerator()) {{
             $script:ApolloPreviousColors[$entry.Key] = $options.($entry.Value)
         }}
     }}
 
-    Set-PSReadLineOption -Colors (Get-ApolloPSReadLineColors)
+    $supportedColors = @{{}}
+    foreach ($entry in $supportedProperties.GetEnumerator()) {{
+        $supportedColors[$entry.Key] = $colors[$entry.Key]
+    }}
+    if ($supportedColors.Count -gt 0) {{
+        Set-PSReadLineOption -Colors $supportedColors
+    }}
 }}
 
 function Disable-ApolloTheme {{
@@ -139,7 +164,7 @@ Export-ModuleMember -Function Get-ApolloPSReadLineColors, Enable-ApolloTheme, Di
 def render_manifest() -> str:
     return """@{
     RootModule = 'ApolloTheme.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '0.1.1'
     GUID = '5c88f42f-5dbf-45f5-8514-6f99cb3b628e'
     Author = 'D0n9X1n'
     CompanyName = 'Apollo Theme'

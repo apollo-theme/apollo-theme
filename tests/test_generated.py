@@ -22,9 +22,13 @@ check = load_module("powershell_check", ROOT / "scripts" / "check.py")
 class ApolloPowerShellThemeTests(unittest.TestCase):
     def test_generated_module_maps_semantic_roles_and_restores_options(self) -> None:
         palette = generate.load_palette()
-        self.assertEqual((ROOT / "ApolloTheme.psm1").read_text(), generate.render_module(palette))
+        module = generate.render_module(palette)
+        self.assertEqual((ROOT / "ApolloTheme.psm1").read_text(), module)
         self.assertEqual((ROOT / "ApolloTheme.psd1").read_text(), generate.render_manifest())
         self.assertEqual((ROOT / "ApolloTheme.profile.ps1").read_text(), generate.render_profile())
+        self.assertIn("Get-ApolloSupportedColorProperties", module)
+        self.assertIn("$Options.PSObject.Properties[$entry.Value]", module)
+        self.assertIn("Set-PSReadLineOption -Colors $supportedColors", module)
         check.validate_static()
 
 

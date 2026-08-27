@@ -1,6 +1,6 @@
 @{
     RootModule = 'ApolloTheme.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '0.1.1'
     GUID = '5c88f42f-5dbf-45f5-8514-6f99cb3b628e'
     Author = 'D0n9X1n'
     CompanyName = 'Apollo Theme'

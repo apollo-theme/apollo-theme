@@ -51,6 +51,22 @@ function Get-ApolloPSReadLineColors {
     }
 }
 
+function Get-ApolloSupportedColorProperties {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object] $Options
+    )
+
+    $supported = @{}
+    foreach ($entry in $script:ApolloColorProperties.GetEnumerator()) {
+        if ($null -ne $Options.PSObject.Properties[$entry.Value]) {
+            $supported[$entry.Key] = $entry.Value
+        }
+    }
+    return $supported
+}
+
 function Enable-ApolloTheme {
     [CmdletBinding()]
     param()
@@ -59,15 +75,24 @@ function Enable-ApolloTheme {
         Import-Module PSReadLine -ErrorAction Stop
     }
 
+    $options = Get-PSReadLineOption
+    $supportedProperties = Get-ApolloSupportedColorProperties -Options $options
+    $colors = Get-ApolloPSReadLineColors
+
     if ($null -eq $script:ApolloPreviousColors) {
-        $options = Get-PSReadLineOption
         $script:ApolloPreviousColors = @{}
-        foreach ($entry in $script:ApolloColorProperties.GetEnumerator()) {
+        foreach ($entry in $supportedProperties.GetEnumerator()) {
             $script:ApolloPreviousColors[$entry.Key] = $options.($entry.Value)
         }
     }
 
-    Set-PSReadLineOption -Colors (Get-ApolloPSReadLineColors)
+    $supportedColors = @{}
+    foreach ($entry in $supportedProperties.GetEnumerator()) {
+        $supportedColors[$entry.Key] = $colors[$entry.Key]
+    }
+    if ($supportedColors.Count -gt 0) {
+        Set-PSReadLineOption -Colors $supportedColors
+    }
 }
 
 function Disable-ApolloTheme {
