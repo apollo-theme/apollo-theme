@@ -7,7 +7,7 @@
   <a href="https://github.com/apollo-theme/sonicterm-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/sonicterm-apollo-theme/ci.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
   <a href="https://github.com/apollo-theme/sonicterm-apollo-theme/releases/latest"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/sonicterm-apollo-theme?display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
   <a href="https://github.com/apollo-theme/sonicterm-apollo-theme/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
-  <a href="https://github.com/D0n9X1n/SonicTerm"><img alt="Target: SonicTerm on macOS" src="https://img.shields.io/badge/target-SonicTerm%20%C2%B7%20macOS-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/D0n9X1n/SonicTerm"><img alt="Target: SonicTerm on macOS, Windows, and Linux" src="https://img.shields.io/badge/target-SonicTerm%20%C2%B7%20cross--platform-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/blob/main/palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=for-the-badge&amp;labelColor=141617"></a>
 </p>
 
