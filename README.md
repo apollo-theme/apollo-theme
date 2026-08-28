@@ -1,8 +1,20 @@
-# Apollo for Apple Terminal
+<h1 align="center">Apple Terminal Apollo Theme</h1>
 
-Apollo is SonicTerm's high-contrast Gruvbox Dark Hard variant for macOS Terminal, built on a near-black canvas with bright terminal colors.
+<p align="center">Apollo brings a near-black canvas, warm contrast, and vivid terminal colors to Apple Terminal.</p>
 
-Repository: <https://github.com/apollo-theme/apple-terminal-apollo-theme>
+<p align="center">
+  <a href="https://apollo-theme.github.io/#app-apple-terminal"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/actions/workflows/check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apple-terminal-apollo-theme/check.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
+  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/releases/latest"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/apple-terminal-apollo-theme?display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
+  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://support.apple.com/guide/terminal/welcome/mac"><img alt="Target: Apple Terminal on macOS" src="https://img.shields.io/badge/target-Apple%20Terminal%20%C2%B7%20macOS-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/blob/main/palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=for-the-badge&amp;labelColor=141617"></a>
+</p>
+
+<p align="center">
+  <a href="https://apollo-theme.github.io/#app-apple-terminal"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/apple-terminal.svg" alt="Simulated Apollo preview for Apple Terminal"></a>
+</p>
+<p align="center"><sub><strong>Simulated preview.</strong> Rendered output may vary by font and platform.</sub></p>
 
 ## Install and activate
 
@@ -38,4 +50,4 @@ python3 -m unittest tests.test_theme.TerminalThemeTests.test_archived_colors_mat
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE)
