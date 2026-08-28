@@ -49,3 +49,9 @@
 [submodule "eza-apollo-theme"]
 	path = eza-apollo-theme
 	url = https://github.com/apollo-theme/eza-apollo-theme.git
+[submodule ".github/organization"]
+	path = .github/organization
+	url = https://github.com/apollo-theme/.github.git
+[submodule "apollo-theme.github.io"]
+	path = apollo-theme.github.io
+	url = https://github.com/apollo-theme/apollo-theme.github.io.git

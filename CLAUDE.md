@@ -6,7 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the synchronized parent for the Apollo Theme family. Apollo is SonicTerm's higher-contrast Gruvbox Dark Hard variant; `palette/apollo.json` is the only palette source of truth. It records the upstream SonicTerm path, commit, and checksum. Do not substitute the unrelated 46-color palette also named Apollo or the obsolete mixed palette in `dot-configs/themes/apollo/`.
 
-Every `*-apollo-theme/` directory is an independent public repository represented here as a direct Git submodule. A child must remain cloneable, understandable, generatable, and testable without the parent checkout. Its committed `palette/apollo.json` is an exact snapshot of the parent palette, while its native artifact and app semantics belong to that child.
+Every `*-apollo-theme/` directory is an independent public application repository represented here as a direct Git submodule. A child must remain cloneable, understandable, generatable, and testable without the parent checkout. Its committed `palette/apollo.json` is an exact snapshot of the parent palette, while its native artifact and app semantics belong to that child.
+
+Two additional management repositories are submodules but are not application integrations:
+
+- `apollo-theme.github.io/` is the organization-root GitHub Pages site and owns all generated app preview SVGs.
+- `.github/organization/` is `apollo-theme/.github`. It lives below the parent `.github/` directory because `.github/workflows/` must remain owned by this parent repository. The organization repository contains exactly one file: `profile/README.md`.
+
+Publish the website before README changes so every embedded preview URL is live. Then publish the organization profile and application children, update repository metadata/topics, and commit the parent gitlinks last.
 
 A palette update moves outward in this order:
 
