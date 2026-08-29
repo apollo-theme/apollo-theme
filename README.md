@@ -1,6 +1,6 @@
-<h1 align="center">WezTerm Apollo Theme</h1>
+<h1 align="center">WezTerm Apollo Themes</h1>
 
-<p align="center">Apollo brings a near-black canvas, warm contrast, and vivid terminal colors to WezTerm.</p>
+<p align="center">Apollo pairs a near-black, warm-contrast dark scheme with Apollo Light's warm paper canvas for WezTerm.</p>
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-wezterm"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
@@ -12,44 +12,62 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-wezterm"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/wezterm.svg" alt="Simulated Apollo preview for WezTerm"></a>
+  <a href="https://apollo-theme.github.io/#app-wezterm"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/wezterm.svg" alt="Simulated dark Apollo preview for WezTerm"></a>
+  <a href="https://apollo-theme.github.io/#app-wezterm-light"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/wezterm-light.svg" alt="Simulated Apollo Light preview for WezTerm"></a>
 </p>
-<p align="center"><sub><strong>Simulated preview.</strong> Rendered output may vary by font and platform.</sub></p>
+<p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-## Install and activate
+`Apollo` and `apollo.toml` remain the existing dark scheme. `Apollo Light` is additive in `apollo-light.toml`; the included `wezterm.lua` intentionally continues to activate dark Apollo.
 
-On Unix-like systems:
+## Install
+
+On Unix-like systems, install either scheme or both:
 
 ```sh
 mkdir -p ~/.config/wezterm/colors
 cp apollo.toml ~/.config/wezterm/colors/apollo.toml
+cp apollo-light.toml ~/.config/wezterm/colors/apollo-light.toml
 ```
 
-On Windows, copy `apollo.toml` to the `colors` directory beside `wezterm.exe`. Then add this to `wezterm.lua` (the included `wezterm.lua` is a minimal example):
+On Windows, copy the same files to the `colors` directory beside `wezterm.exe`.
+
+## Activate
+
+Add exactly one name to your `wezterm.lua`:
 
 ```lua
-config.color_scheme = 'Apollo'
+config.color_scheme = 'Apollo'       -- existing dark scheme
+```
+
+or:
+
+```lua
+config.color_scheme = 'Apollo Light' -- light scheme
 ```
 
 Reload the configuration or restart WezTerm.
 
 ## Uninstall
 
-Select another `color_scheme`, reload, then remove the copied `apollo.toml`.
+Select another `color_scheme`, reload, then remove the copied `apollo.toml` and/or `apollo-light.toml`. Removing one variant does not affect the other.
 
 ## Visual check
 
-Print ANSI colors 0–15, move the cursor over text, and select differently colored cells. Confirm the `#141617` canvas, warm foreground, yellow cursor, a 50%-alpha grey-brown selection that preserves each cell's foreground, and the exact normal/bright arrays in `palette/apollo.json`. Automated checks validate the TOML and installed WezTerm can load it, but rendered pixels still require this manual check.
+For both variants, print ANSI colors 0–15, move the cursor over differently colored text, and select those cells. Dark Apollo should retain its `#141617` canvas and 50%-alpha grey-brown selection. Apollo Light should use the `#f9f5d7` canvas and opaque `#ebdbb2` selection. Both must preserve each selected cell's foreground (`selection_fg = "none"`) and match the ordered arrays in their palette snapshot. Native loading and TOML checks do not replace rendered-pixel inspection.
 
 ## Development
 
-The committed `apollo.toml` is generated from the pinned palette snapshot at `palette/apollo.json`.
+- `palette/apollo.json` → `apollo.toml` (dark, compatibility-preserving)
+- `palette/apollo-light.json` → `apollo-light.toml` (light)
 
 ```sh
+python3 scripts/generate.py
 python3 scripts/generate.py --check
 python3 scripts/check.py
 python3 -m unittest discover -s tests -v
 ```
+
+Generation and checks never modify WezTerm preferences.
 
 ## License
 

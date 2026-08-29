@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the WezTerm Apollo color scheme from the palette snapshot."""
+"""Generate the WezTerm Apollo color schemes from the palette snapshots."""
 
 from __future__ import annotations
 
@@ -10,12 +10,14 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-PALETTE_PATH = ROOT / "palette" / "apollo.json"
-OUTPUT_PATH = ROOT / "apollo.toml"
+OUTPUTS = {
+    ROOT / "apollo.toml": ROOT / "palette" / "apollo.json",
+    ROOT / "apollo-light.toml": ROOT / "palette" / "apollo-light.json",
+}
 REPOSITORY_URL = "https://github.com/apollo-theme/wezterm-apollo-theme"
 
 
-def load_palette(path: Path = PALETTE_PATH) -> dict[str, Any]:
+def load_palette(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
 
@@ -35,8 +37,9 @@ def rgba(color: str, alpha: float) -> str:
 
 def render(palette: dict[str, Any]) -> str:
     terminal = palette["terminal"]
+    source_name = "apollo-light.json" if palette["id"] == "apollo-light" else "apollo.json"
     lines = [
-        "# Generated from palette/apollo.json by scripts/generate.py; do not edit.",
+        f"# Generated from palette/{source_name} by scripts/generate.py; do not edit.",
         "[colors]",
         f'foreground = {quoted(terminal["foreground"])}',
         f'background = {quoted(terminal["background"])}',
@@ -57,26 +60,43 @@ def render(palette: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_outputs() -> dict[Path, str]:
+    return {output_path: render(load_palette(palette_path)) for output_path, palette_path in OUTPUTS.items()}
+
+
+def find_unexpected_outputs(root: Path = ROOT) -> list[Path]:
+    expected_names = {path.name for path in OUTPUTS}
+    return sorted(path for path in root.glob("*.toml") if path.name not in expected_names)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail if apollo.toml is stale")
+    parser.add_argument("--check", action="store_true", help="fail if generated schemes are stale")
     args = parser.parse_args()
-    rendered = render(load_palette())
+    rendered_outputs = render_outputs()
 
     if args.check:
-        try:
-            current = OUTPUT_PATH.read_text(encoding="utf-8")
-        except FileNotFoundError:
-            print(f"missing generated artifact: {OUTPUT_PATH.name}", file=sys.stderr)
-            return 1
-        if current != rendered:
-            print(f"generated artifact is stale: {OUTPUT_PATH.name}", file=sys.stderr)
-            return 1
-        print(f"up to date: {OUTPUT_PATH.name}")
-        return 0
+        failed = False
+        for path in find_unexpected_outputs():
+            print(f"unexpected generated artifact: {path.name}", file=sys.stderr)
+            failed = True
+        for output_path, rendered in rendered_outputs.items():
+            try:
+                current = output_path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                print(f"missing generated artifact: {output_path.name}", file=sys.stderr)
+                failed = True
+                continue
+            if current != rendered:
+                print(f"generated artifact is stale: {output_path.name}", file=sys.stderr)
+                failed = True
+            else:
+                print(f"up to date: {output_path.name}")
+        return int(failed)
 
-    OUTPUT_PATH.write_text(rendered, encoding="utf-8", newline="\n")
-    print(f"wrote {OUTPUT_PATH.name}")
+    for output_path, rendered in rendered_outputs.items():
+        output_path.write_text(rendered, encoding="utf-8", newline="\n")
+        print(f"wrote {output_path.name}")
     return 0
 
 
