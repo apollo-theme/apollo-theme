@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the Apollo PSReadLine module from the bundled palette snapshot."""
+"""Generate the Apollo PSReadLine module from bundled palette snapshots."""
 
 from __future__ import annotations
 
@@ -9,22 +9,37 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PALETTE_PATH = ROOT / "palette" / "apollo.json"
 OUTPUT_PATH = ROOT / "ApolloTheme.psm1"
 MANIFEST_PATH = ROOT / "ApolloTheme.psd1"
 PROFILE_PATH = ROOT / "ApolloTheme.profile.ps1"
-PALETTE_SHA256 = "a2989522f9369f1e46f13e5eda3a2333b8665228c82356795c8ec277443d3811"
+VARIANTS = {
+    "Dark": {
+        "palette": ROOT / "palette" / "apollo.json",
+        "sha256": "550f8c36cf4ef6ac99551541d1fe9554f77d563fa1e7c129a6a82583321d61ef",
+        "id": "apollo",
+    },
+    "Light": {
+        "palette": ROOT / "palette" / "apollo-light.json",
+        "sha256": "b0dbdeb719ed1931c424e9590562689325ecac1609e2fed6406ec5c4d3dc5763",
+        "id": "apollo-light",
+    },
+}
 
 
-def load_palette() -> dict:
-    palette = json.loads(PALETTE_PATH.read_text(encoding="utf-8"))
-    normalized = json.dumps(palette, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    digest = hashlib.sha256(normalized).hexdigest()
-    if digest != PALETTE_SHA256:
-        raise ValueError(f"palette snapshot semantic hash mismatch: {digest}")
-    if palette.get("id") != "apollo" or palette.get("schemaVersion") != 1:
-        raise ValueError("unsupported Apollo palette snapshot")
+def load_palette(variant: str = "Dark") -> dict:
+    config = VARIANTS[variant]
+    raw = config["palette"].read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != config["sha256"]:
+        raise ValueError(f"{variant} palette snapshot hash mismatch: {digest}")
+    palette = json.loads(raw)
+    if palette.get("id") != config["id"] or palette.get("schemaVersion") != 1:
+        raise ValueError(f"unsupported Apollo {variant} palette snapshot")
     return palette
+
+
+def load_palettes() -> dict[str, dict]:
+    return {variant: load_palette(variant) for variant in VARIANTS}
 
 
 def resolve_role(palette: dict, role: str) -> str:
@@ -34,10 +49,21 @@ def resolve_role(palette: dict, role: str) -> str:
     return palette["colors"][reference[8:-1]]
 
 
-def render_module(palette: dict) -> str:
+def selection_sequence(foreground: str, background: str) -> str:
+    values = [
+        int(foreground[index:index + 2], 16)
+        for index in (1, 3, 5)
+    ] + [
+        int(background[index:index + 2], 16)
+        for index in (1, 3, 5)
+    ]
+    return f"\x1b[38;2;{values[0]};{values[1]};{values[2]};48;2;{values[3]};{values[4]};{values[5]}m"
+
+
+def token_colors(palette: dict) -> dict[str, str]:
     role = lambda name: resolve_role(palette, name)
     colors = palette["colors"]
-    token_colors = {
+    return {
         "ContinuationPrompt": role("textSecondary"),
         "Emphasis": role("focus"),
         "Error": role("error"),
@@ -52,21 +78,31 @@ def render_module(palette: dict) -> str:
         "Type": role("information"),
         "Number": colors["magenta"],
         "Member": colors["cyan"],
-        "Selection": f'\x1b[38;2;{int(role("textPrimary")[1:3], 16)};{int(role("textPrimary")[3:5], 16)};{int(role("textPrimary")[5:7], 16)};48;2;{int(role("selection")[1:3], 16)};{int(role("selection")[3:5], 16)};{int(role("selection")[5:7], 16)}m',
+        "Selection": selection_sequence(role("textPrimary"), role("selection")),
         "InlinePrediction": role("textInactive"),
         "ListPrediction": role("textSecondary"),
-        "ListPredictionSelected": f'\x1b[38;2;{int(role("canvas")[1:3], 16)};{int(role("canvas")[3:5], 16)};{int(role("canvas")[5:7], 16)};48;2;{int(role("information")[1:3], 16)};{int(role("information")[3:5], 16)};{int(role("information")[5:7], 16)}m',
+        "ListPredictionSelected": selection_sequence(role("canvas"), role("information")),
         "ListPredictionTooltip": role("textInactive"),
     }
+
+
+def render_color_table(colors: dict[str, str]) -> str:
     entries = []
-    for key, value in token_colors.items():
+    for key, value in colors.items():
         if value.startswith("\x1b"):
             rendered_value = f'"{value.replace(chr(27), "`e")}"'
         else:
             rendered_value = f"'{value}'"
         entries.append(f"        {key} = {rendered_value}")
-    table = "\n".join(entries)
-    return f'''# Generated from palette/apollo.json by scripts/generate.py; do not edit.
+    return "\n".join(entries)
+
+
+def render_module(palettes: dict[str, dict]) -> str:
+    variant_tables = "\n".join(
+        f"    {variant} = @{{\n{render_color_table(token_colors(palette))}\n    }}"
+        for variant, palette in palettes.items()
+    )
+    return f'''# Generated from palette/apollo.json and palette/apollo-light.json by scripts/generate.py; do not edit.
 Set-StrictMode -Version Latest
 
 $script:ApolloPreviousColors = $null
@@ -91,14 +127,18 @@ $script:ApolloColorProperties = @{{
     ListPredictionSelected = 'ListPredictionSelectedColor'
     ListPredictionTooltip = 'ListPredictionTooltipColor'
 }}
+$script:ApolloVariantColors = @{{
+{variant_tables}
+}}
 
 function Get-ApolloPSReadLineColors {{
     [CmdletBinding()]
-    param()
+    param(
+        [ValidateSet('Dark', 'Light')]
+        [string] $Variant = 'Dark'
+    )
 
-    return @{{
-{table}
-    }}
+    return $script:ApolloVariantColors[$Variant].Clone()
 }}
 
 function Get-ApolloSupportedColorProperties {{
@@ -119,7 +159,10 @@ function Get-ApolloSupportedColorProperties {{
 
 function Enable-ApolloTheme {{
     [CmdletBinding()]
-    param()
+    param(
+        [ValidateSet('Dark', 'Light')]
+        [string] $Variant = 'Dark'
+    )
 
     if (-not (Get-Module -Name PSReadLine)) {{
         Import-Module PSReadLine -ErrorAction Stop
@@ -127,7 +170,7 @@ function Enable-ApolloTheme {{
 
     $options = Get-PSReadLineOption
     $supportedProperties = Get-ApolloSupportedColorProperties -Options $options
-    $colors = Get-ApolloPSReadLineColors
+    $colors = Get-ApolloPSReadLineColors -Variant $Variant
 
     if ($null -eq $script:ApolloPreviousColors) {{
         $script:ApolloPreviousColors = @{{}}
@@ -164,12 +207,12 @@ Export-ModuleMember -Function Get-ApolloPSReadLineColors, Enable-ApolloTheme, Di
 def render_manifest() -> str:
     return """@{
     RootModule = 'ApolloTheme.psm1'
-    ModuleVersion = '0.1.1'
+    ModuleVersion = '0.2.0'
     GUID = '5c88f42f-5dbf-45f5-8514-6f99cb3b628e'
     Author = 'D0n9X1n'
     CompanyName = 'Apollo Theme'
     Copyright = '(c) 2026 D0n9X1n. MIT License.'
-    Description = 'Apollo semantic token colors for PSReadLine with reversible activation.'
+    Description = 'Apollo Dark and Light semantic token colors for PSReadLine with reversible activation.'
     PowerShellVersion = '7.2'
     FunctionsToExport = @('Get-ApolloPSReadLineColors', 'Enable-ApolloTheme', 'Disable-ApolloTheme')
     CmdletsToExport = @()
@@ -193,17 +236,25 @@ Enable-ApolloTheme
 """
 
 
+def render_outputs() -> dict[Path, str]:
+    return {
+        OUTPUT_PATH: render_module(load_palettes()),
+        MANIFEST_PATH: render_manifest(),
+        PROFILE_PATH: render_profile(),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if generated module files are stale")
     args = parser.parse_args()
-    expected = {
-        OUTPUT_PATH: render_module(load_palette()),
-        MANIFEST_PATH: render_manifest(),
-        PROFILE_PATH: render_profile(),
-    }
+    expected = render_outputs()
     if args.check:
-        stale = [path.relative_to(ROOT) for path, text in expected.items() if not path.exists() or path.read_text(encoding="utf-8") != text]
+        stale = [
+            path.relative_to(ROOT)
+            for path, text in expected.items()
+            if not path.exists() or path.read_text(encoding="utf-8") != text
+        ]
         if stale:
             print("stale generated file(s): " + ", ".join(map(str, stale)))
             return 1

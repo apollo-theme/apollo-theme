@@ -12,11 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-powershell"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/powershell.svg" alt="Simulated PowerShell Apollo Theme preview"></a>
+  <a href="https://apollo-theme.github.io/#app-powershell"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/powershell.svg" alt="Simulated PowerShell Apollo Dark preview"></a>
+  <a href="https://apollo-theme.github.io/#app-powershell-light"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/powershell-light.svg" alt="Simulated PowerShell Apollo Light preview"></a>
 </p>
 <p align="center"><em>Simulated preview. Terminal, font, and PSReadLine rendering may vary.</em></p>
 
-Apollo is a small PowerShell module that maps the canonical palette to PSReadLine semantic tokens. Activation is explicit, captures the colors already in use, and can restore them without rewriting your profile.
+Apollo is one PowerShell module that maps the canonical Dark and Light palettes to PSReadLine semantic tokens. Activation is explicit, captures the colors already in use only on first activation, and restores those true pre-Apollo values after any number of Dark/Light switches without rewriting your profile.
 
 ## Install
 
@@ -30,12 +31,15 @@ This only creates the clone; it does not edit `$PROFILE` or enable the theme.
 
 ## Activate
 
-Import and enable Apollo for the current session:
+Import and enable either variant for the current session. Dark remains the default:
 
 ```powershell
 Import-Module "$HOME/.config/powershell-apollo-theme/ApolloTheme.psd1" -Force
-Enable-ApolloTheme
+Enable-ApolloTheme                 # Dark
+Enable-ApolloTheme -Variant Light  # Light
 ```
+
+`Get-ApolloPSReadLineColors` accepts the same `-Variant Dark|Light` parameter. Apollo Light changes PSReadLine token colors only, so use it with a terminal profile that has a light background.
 
 To opt in for future sessions, manually dot-source `ApolloTheme.profile.ps1` from your PowerShell profile. The repository never writes that line for you.
 
@@ -59,7 +63,7 @@ In an interactive PowerShell session, type this without immediately submitting i
 Get-ChildItem -Path $HOME | Where-Object { $_.Name -like '*.txt' } # Apollo
 ```
 
-Commands should be gold, parameters magenta, variables cyan, strings green, keywords blue, ordinary text warm beige, and comments muted brown-gray. Errors should be red.
+For Dark, commands should be gold, parameters magenta, variables cyan, strings green, keywords blue, ordinary text warm beige, and comments muted brown-gray. Light uses darker equivalents on a light terminal background. Errors should be red in either variant.
 
 ## Development
 
