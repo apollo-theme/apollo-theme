@@ -1,6 +1,6 @@
-<h1 align="center">Apple Terminal Apollo Theme</h1>
+<h1 align="center">Apple Terminal Apollo Themes</h1>
 
-<p align="center">Apollo brings a near-black canvas, warm contrast, and vivid terminal colors to Apple Terminal.</p>
+<p align="center">Apollo pairs a near-black, warm-contrast dark profile with Apollo Light's warm paper canvas for Apple Terminal.</p>
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-apple-terminal"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
@@ -12,41 +12,50 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-apple-terminal"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/apple-terminal.svg" alt="Simulated Apollo preview for Apple Terminal"></a>
+  <a href="https://apollo-theme.github.io/#app-apple-terminal"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/apple-terminal.svg" alt="Simulated dark Apollo preview for Apple Terminal"></a>
+  <a href="https://apollo-theme.github.io/#app-apple-terminal-light"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/apple-terminal-light.svg" alt="Simulated Apollo Light preview for Apple Terminal"></a>
 </p>
-<p align="center"><sub><strong>Simulated preview.</strong> Rendered output may vary by font and platform.</sub></p>
+<p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-## Install and activate
+`Apollo.terminal` remains the existing dark profile named **Apollo**. `Apollo Light.terminal` is additive and imports as a separate **Apollo Light** profile without changing the existing default or open windows.
 
-1. Download [`Apollo.terminal`](https://github.com/apollo-theme/apple-terminal-apollo-theme/raw/main/Apollo.terminal).
-2. Double-click it, or in Terminal choose **Settings → Profiles → … → Import…**.
-3. Select **Apollo** in **Settings → Profiles** and click **Default** if new windows should use it.
-4. Existing windows are unchanged; open a new window to inspect the profile.
+## Install
 
-The import adds a theme profile only. It does not set a shell command or modify the currently selected profile.
+1. Download `Apollo.terminal`, `Apollo Light.terminal`, or both.
+2. Double-click each desired file, or choose **Terminal → Settings → Profiles → … → Import…**.
 
-## Visual inspection
+Each import adds a theme-only profile. It sets no shell command and does not modify the current or default profile.
 
-Open a new Apollo window and check normal, bold, selected, and cursor text plus ANSI colors 0–15. Foreground should be `#cfbc97`, the cursor `#fabd2f`, and the canvas `#141617`; selected text must remain readable. A useful ANSI preview is:
+## Activate
+
+Select **Apollo** for dark or **Apollo Light** for light in **Terminal → Settings → Profiles**. Click **Default** only if new windows should use that profile. Existing windows are unchanged; open a new window to inspect the choice.
+
+## Uninstall
+
+Choose another default first if necessary, select **Apollo** and/or **Apollo Light**, and click the minus button. Removing a profile does not change open windows or the other variant.
+
+## Visual check
+
+Open new windows for both profiles and inspect normal, bold, selected, and cursor text plus ANSI colors 0–15. Dark Apollo should retain foreground `#cfbc97`, cursor `#fabd2f`, and canvas `#141617`. Apollo Light should use foreground `#3c3836`, cursor `#8a5200`, and canvas `#f9f5d7`. Verify readable selection and exact ordered terminal slots against the matching palette. A useful ANSI preview is:
 
 ```sh
 for n in $(seq 0 15); do printf '\033[48;5;%sm %2s \033[0m' "$n" "$n"; done; printf '\n'
 ```
 
-## Uninstall
-
-Open **Terminal → Settings → Profiles**, select **Apollo**, and click the minus button. Choose another default profile first if Apollo is the default. Removing it does not change open windows.
-
 ## Development
 
-The committed profile is generated from `palette/apollo.json` using deterministic, standard-library `plistlib` NSKeyedArchiver color data.
+- `palette/apollo.json` → `Apollo.terminal` (dark, compatibility-preserving)
+- `palette/apollo-light.json` → `Apollo Light.terminal` (light)
 
 ```sh
 python3 scripts/generate.py
 python3 scripts/generate.py --check
 python3 scripts/check.py
-python3 -m unittest tests.test_theme.TerminalThemeTests.test_archived_colors_match_palette -v
+python3 -m unittest discover -s tests -v
+plutil -lint Apollo.terminal "Apollo Light.terminal" # macOS
 ```
+
+Generation and checks never import profiles or modify Terminal preferences.
 
 ## License
 
