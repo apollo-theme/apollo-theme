@@ -1,6 +1,6 @@
-<h1 align="center">SonicTerm Apollo Theme</h1>
+<h1 align="center">SonicTerm Apollo Themes</h1>
 
-<p align="center">Apollo brings a near-black canvas, warm contrast, and vivid terminal colors to SonicTerm.</p>
+<p align="center">Apollo pairs a near-black, warm-contrast dark theme with Apollo Light's warm paper canvas for SonicTerm.</p>
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-sonicterm"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
@@ -12,42 +12,71 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-sonicterm"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm.svg" alt="Simulated Apollo preview for SonicTerm"></a>
+  <a href="https://apollo-theme.github.io/#app-sonicterm"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm.svg" alt="Simulated dark Apollo preview for SonicTerm"></a>
+  <a href="https://apollo-theme.github.io/#app-sonicterm-light"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm-light.svg" alt="Simulated Apollo Light preview for SonicTerm"></a>
 </p>
-<p align="center"><sub><strong>Simulated preview.</strong> Rendered output may vary by font and platform.</sub></p>
+<p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-## Install and activate
+`Apollo` and `apollo.toml` remain the existing dark theme. `Apollo Light` is additive and lives in `apollo-light.toml`; existing installations and activation settings are unchanged.
+
+## Install
+
+Install either theme or both:
 
 ```sh
 mkdir -p ~/.sonicterm/themes
 cp apollo.toml ~/.sonicterm/themes/apollo.toml
+cp apollo-light.toml ~/.sonicterm/themes/apollo-light.toml
 ```
 
-Set the theme in `~/.sonicterm/sonicterm.toml`:
+## Activate
+
+Set exactly one theme in `~/.sonicterm/sonicterm.toml`:
 
 ```toml
+# Existing dark theme
 theme = "apollo"
+```
+
+or:
+
+```toml
+# Light theme
+theme = "apollo-light"
 ```
 
 Start SonicTerm, or run **Reload Config** in an existing session.
 
 ## Uninstall
 
-Select another theme in `~/.sonicterm/sonicterm.toml`, reload, then remove `~/.sonicterm/themes/apollo.toml`.
+Select another installed theme, reload the configuration, then remove the corresponding file:
+
+```sh
+rm ~/.sonicterm/themes/apollo.toml        # dark Apollo
+rm ~/.sonicterm/themes/apollo-light.toml  # Apollo Light
+```
+
+Removing one variant does not affect the other.
 
 ## Visual check
 
-Open tabs in active, inactive, and hover states, select text, and print ANSI colors 0–15. Confirm a `#141617` canvas, yellow cursor/active tab, muted inactive labels, grey-brown selection, and the exact normal/bright palette in `palette/apollo.json`. Automated checks validate files and values, not rendered pixels.
+For each installed variant, open tabs in active, inactive, and hover states, select text, and print ANSI colors 0–15. Dark Apollo should retain its `#141617` canvas and yellow cursor. Apollo Light should use the `#f9f5d7` paper canvas, dark `#3c3836` text, and brown `#8a5200` cursor. In both, confirm readable cursor and selection text plus the exact ordered normal/bright arrays in the matching palette snapshot. Automated checks validate files and values, not rendered pixels.
 
 ## Development
 
-The committed `apollo.toml` is generated from the pinned palette snapshot at `palette/apollo.json`.
+Both native files are generated from pinned snapshots:
+
+- `palette/apollo.json` → `apollo.toml` (dark, compatibility-preserving)
+- `palette/apollo-light.json` → `apollo-light.toml` (light)
 
 ```sh
+python3 scripts/generate.py
 python3 scripts/generate.py --check
 python3 scripts/check.py
 python3 -m unittest discover -s tests -v
 ```
+
+Generation and checks never modify SonicTerm preferences.
 
 ## License
 
