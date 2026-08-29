@@ -12,14 +12,15 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-tmux"><img alt="tmux Apollo Theme simulated preview" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/tmux.svg" width="900"></a>
+  <a href="https://apollo-theme.github.io/#app-tmux"><img alt="tmux Apollo Dark simulated preview" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/tmux.svg" width="900"></a>
+  <a href="https://apollo-theme.github.io/#app-tmux-light"><img alt="tmux Apollo Light simulated preview" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/tmux-light.svg" width="900"></a>
 </p>
 
 <p align="center"><em>Simulated preview — terminal fonts and rendering can change the final appearance.</em></p>
 
 ## About
 
-This standalone tmux repository changes colors only: no prefix, key bindings, status content, commands, plugins, hooks, or shell behavior.
+This standalone tmux repository ships `apollo.tmux` (Dark) and `apollo-light.tmux` (Light). Each changes colors only: no prefix, key bindings, status content, commands, plugins, hooks, or shell behavior. Source exactly one variant at a time.
 
 Repository: <https://github.com/apollo-theme/tmux-apollo-theme>
 
@@ -33,17 +34,17 @@ git clone https://github.com/apollo-theme/tmux-apollo-theme "$HOME/.config/tmux-
 
 ## Activate
 
-Apply it to the running server:
+Apply exactly one variant to the running server:
 
 ```sh
+# Dark (default)
 tmux source-file "$HOME/.config/tmux-apollo-theme/apollo.tmux"
+
+# Light
+tmux source-file "$HOME/.config/tmux-apollo-theme/apollo-light.tmux"
 ```
 
-For future servers, manually add this line to your tmux configuration:
-
-```tmux
-source-file ~/.config/tmux-apollo-theme/apollo.tmux
-```
+For future servers, manually add one corresponding `source-file` line to your tmux configuration. Do not source both variants; the last one would simply replace the same theme options. tmux controls status, pane-border, message, and mode chrome but cannot change the terminal canvas behind pane content, so pair Apollo Light with a light terminal profile.
 
 No installer edits your configuration.
 
