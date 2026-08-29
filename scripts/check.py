@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run repository checks without third-party dependencies."""
+"""Run repository checks for both iTerm2 Apollo variants."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-THEME = ROOT / "Apollo.itermcolors"
+PALETTES = (ROOT / "palette" / "apollo.json", ROOT / "palette" / "apollo-light.json")
+THEMES = (ROOT / "Apollo.itermcolors", ROOT / "Apollo Light.itermcolors")
 
 
 def run(command: list[str]) -> None:
@@ -20,13 +20,15 @@ def run(command: list[str]) -> None:
 
 
 def main() -> int:
-    json.loads((ROOT / "palette" / "apollo.json").read_text(encoding="utf-8"))
-    plistlib.loads(THEME.read_bytes())
+    for palette in PALETTES:
+        json.loads(palette.read_text(encoding="utf-8"))
+    for theme in THEMES:
+        plistlib.loads(theme.read_bytes())
     run([sys.executable, "scripts/generate.py", "--check"])
     run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
     if sys.platform == "darwin":
-        run(["plutil", "-lint", str(THEME)])
-    print("all checks passed")
+        run(["plutil", "-lint", *(str(theme) for theme in THEMES)])
+    print("all dark and light checks passed")
     return 0
 
 

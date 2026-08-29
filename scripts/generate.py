@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Apollo.itermcolors from the repository palette snapshot."""
+"""Generate the iTerm2 Apollo themes from the repository palette snapshots."""
 
 from __future__ import annotations
 
@@ -10,17 +10,18 @@ import re
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-PALETTE_PATH = ROOT / "palette" / "apollo.json"
-OUTPUT_PATH = ROOT / "Apollo.itermcolors"
+OUTPUTS = {
+    ROOT / "Apollo.itermcolors": ROOT / "palette" / "apollo.json",
+    ROOT / "Apollo Light.itermcolors": ROOT / "palette" / "apollo-light.json",
+}
 HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
-def load_palette() -> dict:
-    palette = json.loads(PALETTE_PATH.read_text(encoding="utf-8"))
-    if palette.get("id") != "apollo" or palette.get("colorSpace") != "srgb":
-        raise ValueError("palette snapshot must describe Apollo in sRGB")
+def load_palette(path: Path) -> dict:
+    palette = json.loads(path.read_text(encoding="utf-8"))
+    if palette.get("id") not in {"apollo", "apollo-light"} or palette.get("colorSpace") != "srgb":
+        raise ValueError("palette snapshot must describe an Apollo variant in sRGB")
     terminal = palette.get("terminal", {})
     if len(terminal.get("ansi", [])) != 8 or len(terminal.get("bright", [])) != 8:
         raise ValueError("palette snapshot must contain eight ANSI and eight bright colors")
@@ -53,9 +54,7 @@ def render(palette: dict) -> bytes:
             "Cursor Color": color(terminal["cursor"]),
             "Cursor Text Color": color(terminal["cursorText"]),
             "Foreground Color": color(terminal["foreground"]),
-            "Selection Color": color(
-                terminal["selection"]["color"], terminal["selection"]["alpha"]
-            ),
+            "Selection Color": color(terminal["selection"]["color"], terminal["selection"]["alpha"]),
             # Explicitly preserving the foreground avoids low-contrast automatic inversion.
             "Selected Text Color": color(terminal["foreground"]),
         }
@@ -63,25 +62,40 @@ def render(palette: dict) -> bytes:
     return plistlib.dumps(theme, fmt=plistlib.FMT_XML, sort_keys=False)
 
 
+def render_outputs() -> dict[Path, bytes]:
+    return {output_path: render(load_palette(palette_path)) for output_path, palette_path in OUTPUTS.items()}
+
+
+def find_unexpected_outputs(root: Path = ROOT) -> list[Path]:
+    expected_names = {path.name for path in OUTPUTS}
+    return sorted(path for path in root.glob("*.itermcolors") if path.name not in expected_names)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="fail instead of writing when the committed theme is stale",
-    )
+    parser.add_argument("--check", action="store_true", help="fail instead of writing when a committed theme is stale")
     args = parser.parse_args()
+    rendered_outputs = render_outputs()
 
-    generated = render(load_palette())
     if args.check:
-        if not OUTPUT_PATH.exists() or OUTPUT_PATH.read_bytes() != generated:
-            print(f"out of date: {OUTPUT_PATH.name}", file=sys.stderr)
-            return 1
-        print(f"up to date: {OUTPUT_PATH.name}")
-        return 0
+        failed = False
+        for path in find_unexpected_outputs():
+            print(f"unexpected generated artifact: {path.name}", file=sys.stderr)
+            failed = True
+        for output_path, generated in rendered_outputs.items():
+            if not output_path.exists():
+                print(f"missing generated artifact: {output_path.name}", file=sys.stderr)
+                failed = True
+            elif output_path.read_bytes() != generated:
+                print(f"out of date: {output_path.name}", file=sys.stderr)
+                failed = True
+            else:
+                print(f"up to date: {output_path.name}")
+        return int(failed)
 
-    OUTPUT_PATH.write_bytes(generated)
-    print(f"generated: {OUTPUT_PATH.name}")
+    for output_path, generated in rendered_outputs.items():
+        output_path.write_bytes(generated)
+        print(f"generated: {output_path.name}")
     return 0
 
 

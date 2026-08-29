@@ -1,6 +1,6 @@
-<h1 align="center">iTerm2 Apollo Theme</h1>
+<h1 align="center">iTerm2 Apollo Themes</h1>
 
-<p align="center">Apollo brings a near-black canvas, warm contrast, and vivid terminal colors to iTerm2.</p>
+<p align="center">Apollo pairs a near-black, warm-contrast dark preset with Apollo Light's warm paper canvas for iTerm2.</p>
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-iterm2"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
@@ -12,39 +12,51 @@
 </p>
 
 <p align="center">
-  <a href="https://apollo-theme.github.io/#app-iterm2"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/iterm2.svg" alt="Simulated Apollo preview for iTerm2"></a>
+  <a href="https://apollo-theme.github.io/#app-iterm2"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/iterm2.svg" alt="Simulated dark Apollo preview for iTerm2"></a>
+  <a href="https://apollo-theme.github.io/#app-iterm2-light"><img src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/iterm2-light.svg" alt="Simulated Apollo Light preview for iTerm2"></a>
 </p>
-<p align="center"><sub><strong>Simulated preview.</strong> Rendered output may vary by font and platform.</sub></p>
+<p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-## Install and activate
+`Apollo.itermcolors` remains the existing dark preset named **Apollo**. `Apollo Light.itermcolors` is additive; importing it creates the separate **Apollo Light** preset and does not change existing profiles.
 
-1. Download [`Apollo.itermcolors`](https://github.com/apollo-theme/iterm2-apollo-theme/raw/main/Apollo.itermcolors).
+## Install
+
+1. Download `Apollo.itermcolors`, `Apollo Light.itermcolors`, or both.
 2. In iTerm2, open **Settings → Profiles → Colors**.
-3. Open **Color Presets… → Import…** and choose `Apollo.itermcolors`.
-4. Open **Color Presets…** again and select **Apollo**.
+3. Open **Color Presets… → Import…** and choose each desired file.
 
-## Visual inspection
+Importing presets does not activate them or modify current profile colors.
 
-Open a fresh profile and check normal, bold, selected, and cursor text plus ANSI colors 0–15. Foreground should be `#cfbc97`, the cursor `#fabd2f`, and the canvas `#141617`; selected text must remain readable. A useful ANSI preview is:
+## Activate
+
+Open **Settings → Profiles → Colors → Color Presets…**, then choose **Apollo** for dark or **Apollo Light** for light. Apply the choice separately to each profile that should use it.
+
+## Uninstall
+
+Open **Settings → Profiles → Colors → Color Presets… → Delete Preset…**, select **Apollo** and/or **Apollo Light**, and confirm. Existing profiles retain their current copied colors until changed.
+
+## Visual check
+
+For each preset, open a fresh profile and inspect normal, bold, selected, and cursor text plus ANSI colors 0–15. Dark Apollo should retain foreground `#cfbc97`, cursor `#fabd2f`, and canvas `#141617`. Apollo Light should use foreground `#3c3836`, cursor `#8a5200`, and canvas `#f9f5d7`. Selection must remain readable and follow the matching palette's alpha. A useful ANSI preview is:
 
 ```sh
 for n in $(seq 0 15); do printf '\033[48;5;%sm %2s \033[0m' "$n" "$n"; done; printf '\n'
 ```
 
-## Uninstall
-
-In **Settings → Profiles → Colors → Color Presets…**, choose **Delete Preset…**, select **Apollo**, and confirm. Existing profiles retain their current colors until changed.
-
 ## Development
 
-The committed theme is generated from `palette/apollo.json` using only Python's standard library.
+- `palette/apollo.json` → `Apollo.itermcolors` (dark, compatibility-preserving)
+- `palette/apollo-light.json` → `Apollo Light.itermcolors` (light)
 
 ```sh
 python3 scripts/generate.py
 python3 scripts/generate.py --check
 python3 scripts/check.py
-python3 -m unittest tests.test_theme.ItermThemeTests.test_required_color_roles -v
+python3 -m unittest discover -s tests -v
+plutil -lint Apollo.itermcolors "Apollo Light.itermcolors" # macOS
 ```
+
+Generation and checks never import presets or edit iTerm2 preferences.
 
 ## License
 
