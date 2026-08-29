@@ -1,6 +1,6 @@
 <h1 align="center">Vim Apollo Theme</h1>
 
-<p align="center">Apollo brings a warm, high-contrast dark colorscheme to Vim with broad native highlighting, exact terminal colors, and truecolor or xterm-256 support.</p>
+<p align="center">Apollo brings warm, high-contrast dark and light colorschemes to Vim with broad native highlighting, exact terminal colors, and truecolor or xterm-256 support.</p>
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-vim"><img alt="Preview" src="https://img.shields.io/badge/Preview-open-fabd2f?style=flat-square&amp;labelColor=141617"></a>
@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-vim"><img alt="Simulated preview of Apollo in Vim" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/vim.svg" width="960"></a>
+  <a href="https://apollo-theme.github.io/#app-vim-light"><img alt="Simulated preview of Apollo Light in Vim" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/vim-light.svg" width="960"></a>
 </p>
 <p align="center"><sub><strong>Simulated preview.</strong> Font, terminal, and syntax rendering may vary; Apollo supplies both GUI colors and xterm-256 fallbacks.</sub></p>
 
@@ -21,7 +22,7 @@
 - Native Vim UI, syntax, diff, and diagnostic highlighting.
 - Exact canonical normal and bright terminal ANSI colors.
 - Truecolor presentation with deterministic xterm-256 fallbacks.
-- A standalone generated `colors/apollo.vim` with no runtime dependencies.
+- Standalone generated `colors/apollo.vim` and `colors/apollo-light.vim` files with no runtime dependencies.
 
 ## Install
 
@@ -53,11 +54,11 @@ endif
 colorscheme apollo
 ```
 
-Without `termguicolors`, Apollo uses its 256-color fallbacks.
+Use `colorscheme apollo-light` for the light variant. Without `termguicolors`, each variant uses its independently selected hue-preserving 256-color fallbacks.
 
 ## Visual verification
 
-Open a syntax-rich buffer and confirm that normal source is warm and readable on the near-black canvas, active and search cues are gold, comments remain visibly muted, and diff or diagnostic states remain distinguishable. To verify the colorscheme loads cleanly with both GUI and 256-color highlight assertions, run:
+Open a syntax-rich buffer in both variants. Apollo should use `#cfbc97` on `#141617`; Apollo Light should use `#3c3836` on `#f9f5d7`. Confirm active/search cues, comments, diffs, and diagnostics remain distinguishable in truecolor and 256-color modes. To verify the colorscheme loads cleanly with both GUI and 256-color highlight assertions, run:
 
 ```sh
 vim -Nu NONE -n -es -i NONE -S tests/headless.vim
@@ -71,11 +72,11 @@ For vim-plug, remove the `Plug` line, restart Vim, and run `:PlugClean`. For the
 rm -rf ~/.vim/pack/apollo/start/vim-apollo-theme
 ```
 
-Then remove `colorscheme apollo` from `.vimrc`.
+Then remove `colorscheme apollo` or `colorscheme apollo-light` from `.vimrc`.
 
 ## Develop and validate
 
-`palette/apollo.json` is the exact canonical palette snapshot. `colors/apollo.vim` is deterministic generated output and must not be edited directly. Build and run the full validation set from the repository root:
+Both files under `palette/` are exact canonical snapshots. Both files under `colors/` are deterministic generated outputs and must not be edited directly. Build and run the full validation set from the repository root:
 
 ```sh
 python3 scripts/generate.py

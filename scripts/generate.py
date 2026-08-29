@@ -12,9 +12,14 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-PALETTE_PATH = ROOT / "palette" / "apollo.json"
-OUTPUT_PATH = ROOT / "colors" / "apollo.vim"
-EXPECTED_PALETTE_SHA256 = "550f8c36cf4ef6ac99551541d1fe9554f77d563fa1e7c129a6a82583321d61ef"
+PALETTE_SHA256 = {
+    "apollo": "550f8c36cf4ef6ac99551541d1fe9554f77d563fa1e7c129a6a82583321d61ef",
+    "apollo-light": "b0dbdeb719ed1931c424e9590562689325ecac1609e2fed6406ec5c4d3dc5763",
+}
+VARIANT_PATHS = {
+    "apollo": (ROOT / "palette" / "apollo.json", ROOT / "colors" / "apollo.vim"),
+    "apollo-light": (ROOT / "palette" / "apollo-light.json", ROOT / "colors" / "apollo-light.vim"),
+}
 HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 OBSOLETE_COLORS = {
     "#ebdbb2",
@@ -27,23 +32,28 @@ OBSOLETE_COLORS = {
     "#d4be98",
 }
 
-# Hand-selected xterm-256 approximations preserve each color's semantic hue.
-COLOR_SPECS = (
-    ("bg", "background", 233),
-    ("surface", "surface", 234),
-    ("surface_hover", "surfaceHover", 234),
-    ("selection", "selection", 237),
-    ("fg", "foreground", 180),
-    ("fg_secondary", "foregroundSecondary", 187),
-    ("fg_inactive", "foregroundInactive", 245),
-    ("fg_bright", "foregroundBright", 230),
-    ("accent", "accent", 214),
-    ("danger", "danger", 203),
-    ("success", "success", 142),
-    ("info", "info", 109),
-    ("magenta", "magenta", 175),
-    ("cyan", "cyan", 108),
+COLOR_KEYS = (
+    ("bg", "background"),
+    ("surface", "surface"),
+    ("surface_hover", "surfaceHover"),
+    ("selection", "selection"),
+    ("fg", "foreground"),
+    ("fg_secondary", "foregroundSecondary"),
+    ("fg_inactive", "foregroundInactive"),
+    ("fg_bright", "foregroundBright"),
+    ("accent", "accent"),
+    ("danger", "danger"),
+    ("success", "success"),
+    ("info", "info"),
+    ("magenta", "magenta"),
+    ("cyan", "cyan"),
 )
+
+# Independently hand-selected xterm-256 approximations preserve semantic hue.
+CTERM_FALLBACKS = {
+    "apollo": (233, 234, 234, 237, 180, 187, 245, 230, 214, 203, 142, 109, 175, 108),
+    "apollo-light": (230, 230, 223, 187, 237, 239, 59, 235, 94, 124, 58, 24, 95, 23),
+}
 
 # group, foreground, background, GUI attributes, cterm attributes, special color
 HIGHLIGHTS = (
@@ -190,30 +200,32 @@ class PaletteError(ValueError):
     """Raised when the palette cannot safely generate a theme."""
 
 
-def load_palette() -> dict[str, Any]:
+def load_palette(variant: str) -> dict[str, Any]:
+    palette_path, _ = VARIANT_PATHS[variant]
     try:
-        palette_bytes = PALETTE_PATH.read_bytes()
+        palette_bytes = palette_path.read_bytes()
         palette = json.loads(palette_bytes)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError) as error:
-        raise PaletteError(f"cannot read {PALETTE_PATH}: {error}") from error
+        raise PaletteError(f"cannot read {palette_path}: {error}") from error
 
     digest = hashlib.sha256(palette_bytes).hexdigest()
-    if digest != EXPECTED_PALETTE_SHA256:
+    if digest != PALETTE_SHA256[variant]:
         raise PaletteError(
-            "palette snapshot differs from canonical palette/apollo.json "
-            f"(expected {EXPECTED_PALETTE_SHA256}, got {digest})"
+            f"palette snapshot differs from canonical {palette_path.relative_to(ROOT)} "
+            f"(expected {PALETTE_SHA256[variant]}, got {digest})"
         )
-    if palette.get("schemaVersion") != 1 or palette.get("id") != "apollo":
-        raise PaletteError("palette must be Apollo schema version 1")
-    if palette.get("appearance") != "dark" or palette.get("colorSpace") != "srgb":
-        raise PaletteError("palette must be the dark sRGB Apollo variant")
+    appearance = "light" if variant == "apollo-light" else "dark"
+    if palette.get("schemaVersion") != 1 or palette.get("id") != variant:
+        raise PaletteError(f"palette must be {variant} schema version 1")
+    if palette.get("appearance") != appearance or palette.get("colorSpace") != "srgb":
+        raise PaletteError(f"palette must be the {appearance} sRGB Apollo variant")
 
     colors = palette.get("colors")
     terminal = palette.get("terminal")
     if not isinstance(colors, dict) or not isinstance(terminal, dict):
         raise PaletteError("palette colors and terminal sections are required")
 
-    required = {key for _, key, _ in COLOR_SPECS} | {"ansiBrightBlack"}
+    required = {key for _, key in COLOR_KEYS} | {"ansiBrightBlack"}
     missing = sorted(required - colors.keys())
     if missing:
         raise PaletteError(f"palette is missing colors: {', '.join(missing)}")
@@ -231,7 +243,7 @@ def load_palette() -> dict[str, Any]:
         raise PaletteError("terminal ansi and bright arrays must each contain eight colors")
 
     expected_terminal = [
-        colors["surface"],
+        colors["foreground"] if variant == "apollo-light" else colors["surface"],
         colors["danger"],
         colors["success"],
         colors["accent"],
@@ -258,22 +270,28 @@ def vim_value(name: str | None) -> str:
 
 
 def render(palette: dict[str, Any]) -> str:
+    variant = palette["id"]
+    appearance = palette["appearance"]
     colors = palette["colors"]
     terminal = palette["terminal"]["ansi"] + palette["terminal"]["bright"]
+    color_specs = tuple(
+        (variable, key, cterm)
+        for (variable, key), cterm in zip(COLOR_KEYS, CTERM_FALLBACKS[variant], strict=True)
+    )
     lines = [
         '" Generated by scripts/generate.py; do not edit.',
-        '" Apollo colorscheme for Vim.',
+        f'" {palette["name"]} colorscheme for Vim.',
         "",
         "highlight clear",
         "if exists('syntax_on')",
         "  syntax reset",
         "endif",
-        "set background=dark",
-        "let g:colors_name = 'apollo'",
+        f"set background={appearance}",
+        f"let g:colors_name = '{variant}'",
         "",
         '" Canonical GUI colors and hue-preserving xterm-256 fallbacks.',
     ]
-    for variable, key, cterm in COLOR_SPECS:
+    for variable, key, cterm in color_specs:
         lines.append(f"let s:{variable} = ['{colors[key]}', {cterm}]")
 
     lines.extend(
@@ -346,32 +364,48 @@ def canonical_colors(palette: dict[str, Any]) -> set[str]:
 def assert_generated_colors(output: str, palette: dict[str, Any]) -> None:
     literals = {match.lower() for match in re.findall(r"#[0-9a-fA-F]{6}", output)}
     unexpected = sorted(literals - canonical_colors(palette))
-    obsolete = sorted(literals & OBSOLETE_COLORS)
+    obsolete = sorted(literals & OBSOLETE_COLORS) if palette["id"] == "apollo" else []
     if unexpected:
         raise PaletteError(f"generated output contains non-palette colors: {', '.join(unexpected)}")
     if obsolete:
         raise PaletteError(f"generated output contains obsolete colors: {', '.join(obsolete)}")
 
 
-def write_or_check(output: str, check: bool) -> int:
-    if check:
-        try:
-            current = OUTPUT_PATH.read_text(encoding="utf-8")
-        except FileNotFoundError:
-            print(f"out of date: {OUTPUT_PATH.relative_to(ROOT)} is missing", file=sys.stderr)
-            return 1
-        if current != output:
-            print(
-                f"out of date: regenerate {OUTPUT_PATH.relative_to(ROOT)} with scripts/generate.py",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"up to date: {OUTPUT_PATH.relative_to(ROOT)}")
-        return 0
+def render_all() -> dict[Path, str]:
+    return {
+        output_path: render(load_palette(variant))
+        for variant, (_, output_path) in VARIANT_PATHS.items()
+    }
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(output, encoding="utf-8", newline="\n")
-    print(f"generated {OUTPUT_PATH.relative_to(ROOT)}")
+
+def write_or_check(outputs: dict[Path, str], check: bool) -> int:
+    unexpected = sorted(set((ROOT / "colors").glob("*.vim")) - set(outputs))
+    if unexpected:
+        for path in unexpected:
+            print(f"unexpected generated output: {path.relative_to(ROOT)}", file=sys.stderr)
+        return 1
+
+    stale: list[Path] = []
+    for path, output in outputs.items():
+        if check:
+            try:
+                current = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                stale.append(path)
+                continue
+            if current != output:
+                stale.append(path)
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(output, encoding="utf-8", newline="\n")
+            print(f"generated {path.relative_to(ROOT)}")
+
+    if stale:
+        for path in stale:
+            print(f"out of date: regenerate {path.relative_to(ROOT)} with scripts/generate.py", file=sys.stderr)
+        return 1
+    if check:
+        print("up to date: " + ", ".join(str(path.relative_to(ROOT)) for path in outputs))
     return 0
 
 
@@ -380,12 +414,11 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="fail if generated files differ")
     args = parser.parse_args()
     try:
-        palette = load_palette()
-        output = render(palette)
+        outputs = render_all()
     except PaletteError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-    return write_or_check(output, args.check)
+    return write_or_check(outputs, args.check)
 
 
 if __name__ == "__main__":

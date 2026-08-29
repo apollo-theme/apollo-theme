@@ -22,6 +22,20 @@ call assert_equal([
 call assert_equal('#1d2021', g:terminal_color_0)
 call assert_equal('#fbf1c7', g:terminal_color_15)
 
+colorscheme apollo-light
+call assert_equal('apollo-light', g:colors_name)
+call assert_equal('light', &background)
+call assert_equal('#3c3836', tolower(synIDattr(hlID('Normal'), 'fg', 'gui')))
+call assert_equal('#f9f5d7', tolower(synIDattr(hlID('Normal'), 'bg', 'gui')))
+call assert_equal('237', synIDattr(hlID('Normal'), 'fg', 'cterm'))
+call assert_equal('230', synIDattr(hlID('Normal'), 'bg', 'cterm'))
+call assert_equal('#8a5200', tolower(synIDattr(hlID('CursorLineNr'), 'fg', 'gui')))
+call assert_equal('#6b6700', tolower(synIDattr(hlID('String'), 'fg', 'gui')))
+call assert_equal('#9d0006', tolower(synIDattr(hlID('DiagnosticError'), 'fg', 'gui')))
+call assert_equal('#076678', tolower(synIDattr(hlID('DiagnosticInfo'), 'fg', 'gui')))
+call assert_equal('#3c3836', g:terminal_color_0)
+call assert_equal('#282828', g:terminal_color_15)
+
 if len(v:errors)
   for s:error in v:errors
     echomsg s:error

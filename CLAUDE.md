@@ -15,9 +15,9 @@ Only Python's standard library is allowed for build and check scripts.
 
 ## Architecture
 
-- `palette/apollo.json` is the exact canonical palette snapshot and source of truth.
-- `scripts/generate.py` validates the snapshot hash/schema and deterministically owns `colors/apollo.vim`.
-- `colors/apollo.vim` is the distributable native colorscheme. Never edit it directly.
+- `palette/apollo.json` and `palette/apollo-light.json` are exact canonical snapshots.
+- `scripts/generate.py` validates both snapshot hashes/schemas and deterministically owns `colors/apollo.vim` plus `colors/apollo-light.vim`.
+- Both native colorschemes are generated. Preserve dark bytes and use independent hue-preserving cterm fallback tables.
 - `scripts/check.py` runs drift, unit, canonical-color, and clean headless Vim checks.
 - `tests/test_theme.py` guards snapshot identity, deterministic output, and obsolete colors.
 - `tests/headless.vim` verifies loading, GUI/256-color highlights, and terminal ANSI globals.

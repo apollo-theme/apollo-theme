@@ -8,6 +8,9 @@ import sys
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import generate  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 PALETTE = ROOT / "palette" / "apollo.json"
 THEME = ROOT / "colors" / "apollo.vim"
@@ -40,6 +43,30 @@ class ThemeTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_light_variant_contract(self) -> None:
+        palette_path = ROOT / "palette" / "apollo-light.json"
+        self.assertEqual(
+            hashlib.sha256(palette_path.read_bytes()).hexdigest(),
+            "b0dbdeb719ed1931c424e9590562689325ecac1609e2fed6406ec5c4d3dc5763",
+        )
+        palette = json.loads(palette_path.read_text(encoding="utf-8"))
+        theme = (ROOT / "colors" / "apollo-light.vim").read_text(encoding="utf-8")
+        self.assertEqual((palette["id"], palette["appearance"]), ("apollo-light", "light"))
+        self.assertIn("set background=light", theme)
+        self.assertIn("let g:colors_name = 'apollo-light'", theme)
+        self.assertIn("let s:bg = ['#f9f5d7', 230]", theme)
+        self.assertIn("let s:danger = ['#9d0006', 124]", theme)
+        self.assertIn("let s:cyan = ['#356b4d', 23]", theme)
+
+    def test_check_rejects_unexpected_generated_output(self) -> None:
+        unexpected = ROOT / "colors" / "unexpected.vim"
+        unexpected.write_text('" unexpected\n', encoding="utf-8")
+        try:
+            result = generate.write_or_check(generate.render_all(), check=True)
+        finally:
+            unexpected.unlink()
+        self.assertEqual(result, 1)
 
     def test_native_theme_uses_only_canonical_colors(self) -> None:
         palette = json.loads(PALETTE.read_text(encoding="utf-8"))
