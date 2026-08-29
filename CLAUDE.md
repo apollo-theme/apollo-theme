@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project shape
 
-This is the synchronized parent for the Apollo Theme family. Apollo is SonicTerm's higher-contrast Gruvbox Dark Hard variant; `palette/apollo.json` is the only palette source of truth. It records the upstream SonicTerm path, commit, and checksum. Do not substitute the unrelated 46-color palette also named Apollo or the obsolete mixed palette in `dot-configs/themes/apollo/`.
+This is the synchronized parent for the Apollo Theme family. `palette/apollo.json` is the original dark source of truth derived from SonicTerm's higher-contrast Gruvbox Dark Hard variant. `palette/apollo-light.json` is the accessibility-hardened Gruvbox Light Hard source of truth. Both record their upstream path, commit, and checksum. Do not substitute the unrelated 46-color palette also named Apollo or the obsolete mixed palette in `dot-configs/themes/apollo/`.
 
-Every `*-apollo-theme/` directory is an independent public application repository represented here as a direct Git submodule. A child must remain cloneable, understandable, generatable, and testable without the parent checkout. Its committed `palette/apollo.json` is an exact snapshot of the parent palette, while its native artifact and app semantics belong to that child.
+Every `*-apollo-theme/` directory is an independent public application repository represented here as a direct Git submodule. A child must remain cloneable, understandable, generatable, and testable without the parent checkout. Its committed dark and light palette files are exact snapshots of the parent palettes, while native artifacts and app semantics belong to that child. Existing `Apollo` / `apollo` names and unsuffixed files always mean the dark compatibility variant; light uses `Apollo Light` / `apollo-light`.
 
 Two additional management repositories are submodules but are not application integrations:
 
@@ -17,10 +17,11 @@ Publish the website before README changes so every embedded preview URL is live.
 
 A palette update moves outward in this order:
 
-1. Update the root palette and its tests.
-2. Regenerate and validate every child.
-3. Commit and push each child repository.
-4. Commit the resulting child gitlinks in the parent and push the parent last.
+1. Update the relevant root palette and its tests without changing the other variant.
+2. Regenerate and validate both variants in every child.
+3. Publish website preview assets before README changes that embed them.
+4. Commit and push each child repository and wait for CI.
+5. Commit the resulting child and management gitlinks in the parent and push the parent last.
 
 Never publish a parent gitlink that points to an unpushed child commit. Rollbacks use new child commits followed by a new parent gitlink commit; do not rewrite published history.
 
@@ -65,14 +66,22 @@ Each child `CLAUDE.md` documents its generation and validation commands, plus ap
 
 ## Canonical palette invariants
 
+Dark compatibility variant:
+
 - Canvas `#141617`, terminal surface/black `#1d2021`, selection `#3c3836`.
 - Primary text `#cfbc97`, secondary/ANSI white `#d5c4a1`, inactive text `#928374`, bright white `#fbf1c7`.
 - Accent/cursor/warning `#fabd2f`, danger `#fb4934`, success `#b8bb26`, information `#83a598`.
-- ANSI and bright arrays are ordered terminal slots, not unordered color collections.
-- `#665c54` is terminal bright black only. Its contrast on the canvas is below 4.5:1, so do not use it for normal or small text.
+- `#665c54` is terminal bright black only. Its contrast on the dark canvas is below 4.5:1, so do not use it for normal or small text.
 - Selection alpha is 0.5 where the target supports alpha; otherwise the adapter must choose and test a legible opaque mapping.
 
-The root validator checks syntax, canonical slot order, contrast, exact child snapshots, and generated-output drift. App adapters may derive native values such as plist RGB components, but derivation must be deterministic and covered by a fixture or semantic assertion.
+Light variant:
+
+- Canvas `#f9f5d7`, surface `#fbf1c7`, hover `#f2e5bc`, opaque selection `#ebdbb2`.
+- Primary `#3c3836`, secondary `#504945`, inactive/bright black `#665c54`, brightest text `#282828`.
+- Accent/warning `#8a5200`, danger `#9d0006`, success `#6b6700`, information `#076678`, magenta `#8f3f71`, cyan `#356b4d`.
+- Every normal or small text role must remain at least 4.5:1 on canvas, surface, and hover backgrounds. Inverse control/cursor roles are explicit; adapters must not infer them from appearance polarity.
+
+ANSI and bright arrays are ordered terminal slots, not unordered color collections. The root validator checks both schemas, canonical slot order, contrast, exact child snapshots, and generated-output drift. App adapters may derive native values such as plist RGB components, but derivation must be deterministic and covered by a fixture or semantic assertion.
 
 ## Application boundaries
 
@@ -84,4 +93,4 @@ RMUX and tmux have separate repositories by project decision even though their t
 
 ## Documentation and generated files
 
-Root documentation describes the family and synchronization model; app installation details belong in child READMEs. A generated native artifact is committed so users can install it without Python, but edits go through the palette or that child's generator. After generation, `git diff --exit-code` should be empty in check mode.
+Root documentation describes the family and synchronization model; app installation details belong in child READMEs. Generated Dark and Light native artifacts are committed so users can install them without Python, but edits go through a canonical palette or that child's generator. Existing unsuffixed dark artifacts are compatibility surfaces and must not be renamed. After generation, `git diff --exit-code` should be empty in check mode.

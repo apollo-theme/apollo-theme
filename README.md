@@ -2,29 +2,31 @@
 
 # Apollo Theme
 
-**One color system. Every tool that matters.**
+**Two appearances. One color system. Every tool that matters.**
 
 [![Preview](https://img.shields.io/badge/preview-live-fabd2f?style=for-the-badge&labelColor=141617)](https://apollo-theme.github.io/)
 [![Integrations](https://img.shields.io/badge/integrations-17-d5c4a1?style=for-the-badge&labelColor=141617)](#integrations)
+[![Appearances](https://img.shields.io/badge/appearances-dark%20%2B%20light-8a5200?style=for-the-badge&labelColor=f9f5d7)](#signal-palettes)
 [![CI](https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=for-the-badge&label=build&labelColor=141617)](https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/apollo-theme/apollo-theme?style=for-the-badge&labelColor=141617&color=83a598)](https://github.com/apollo-theme/apollo-theme/releases/latest)
 [![License](https://img.shields.io/github/license/apollo-theme/apollo-theme?style=for-the-badge&labelColor=141617&color=b8bb26)](LICENSE)
 
 [![Explore Apollo Theme](https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm.svg)](https://apollo-theme.github.io/)
 
-*Simulated preview — explore all 17 integrations on the live site.*
+*Simulated previews — explore Dark and Light across all 17 integrations.*
 
 </div>
 
-Apollo is a high-contrast dark color system built for long nights, sharp focus, and a workspace that feels continuous from terminal to editor. This repository is the canonical palette, synchronized catalog, and validation hub for the entire family.
+Apollo is a high-contrast color system with dark and light appearances, built for sharp focus and a workspace that feels continuous from terminal to editor. Existing `Apollo` / `apollo` names remain the dark compatibility identity; the additive light appearance is `Apollo Light` / `apollo-light`.
 
-## Signal palette
+## Signal palettes
 
-| Canvas | Surface | Text | Focus | Selection | Error | Success | Info |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `#141617` | `#1d2021` | `#cfbc97` | `#fabd2f` | `#3c3836` | `#fb4934` | `#b8bb26` | `#83a598` |
+| Appearance | Canvas | Surface | Text | Focus | Selection | Error | Success | Info |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Apollo** | `#141617` | `#1d2021` | `#cfbc97` | `#fabd2f` | `#3c3836` | `#fb4934` | `#b8bb26` | `#83a598` |
+| **Apollo Light** | `#f9f5d7` | `#fbf1c7` | `#3c3836` | `#8a5200` | `#ebdbb2` | `#9d0006` | `#6b6700` | `#076678` |
 
-The machine-readable source is [`palette/apollo.json`](palette/apollo.json). Every application repository carries an exact snapshot and a deterministic native adapter.
+The machine-readable sources are [`palette/apollo.json`](palette/apollo.json) and [`palette/apollo-light.json`](palette/apollo-light.json). Every application repository carries exact snapshots and deterministic native adapters for both.
 
 ## Integrations
 
@@ -35,7 +37,7 @@ The machine-readable source is [`palette/apollo.json`](palette/apollo.json). Eve
 | **Shell & CLI** | [PowerShell](powershell-apollo-theme) · [tmux](tmux-apollo-theme) · [RMUX](rmux-apollo-theme) · [bat](bat-apollo-theme) · [eza](eza-apollo-theme) |
 | **Browser** | [Firefox](firefox-apollo-theme) |
 
-Each child is an independent public repository with its own installation guide, generated artifact, tests, CI, and release history. See the [live preview](https://apollo-theme.github.io/) before choosing an integration.
+Each child is an independent public repository with its own installation guide, generated Dark and Light artifacts, tests, CI, and release history. See the [live preview](https://apollo-theme.github.io/) before choosing an integration.
 
 ## Clone the whole constellation
 
