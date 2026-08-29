@@ -1,26 +1,38 @@
-# Alacritty Apollo Theme
+# Alacritty Apollo Themes
 
 ## Architecture
 
-`palette/apollo.json` is the exact canonical snapshot. `scripts/generate.py` maps it deterministically to the committed importable fragment `apollo.toml`; `scripts/check.py` validates snapshot schema, lowercase colors, exact Alacritty sections and keys, mappings, and artifact drift. `tests/test_theme.py` covers ordered normal/bright colors, preservation of selected text, fragment scope, and determinism.
+This standalone repository maps `palette/apollo.json` to existing dark `apollo.toml` and `palette/apollo-light.json` to additive `apollo-light.toml`. Dark artifact bytes, filename, and activation remain unchanged.
 
-The artifact contains only current `[colors.primary]`, `[colors.cursor]`, `[colors.selection]`, `[colors.normal]`, and `[colors.bright]` sections. `CellForeground` is Alacritty's native representation of the canonical `foregroundMode = "preserve"`. Do not invent opacity, font, window, or dim-color settings.
+`scripts/generate.py` uses an ordered two-output map while retaining pure `render(palette)` TOML serialization. Check mode rejects missing, stale, and unexpected root-level TOML artifacts. `scripts/check.py` validates both palette identities, appearances, selection semantics, exact native sections and mappings, ordered slots, and drift. Tests pin the exact light snapshot hash and exercise both variants.
 
-Never edit the snapshot independently. Update it from the canonical Apollo palette, regenerate, and commit both changes. Scripts and tests must not write to real user configuration.
+Artifacts contain only `[colors.primary]`, `[colors.cursor]`, `[colors.selection]`, `[colors.normal]`, and `[colors.bright]`. `CellForeground` is Alacritty's native representation of `foregroundMode = "preserve"`; the format has no selection-alpha field in this fragment. Do not add opacity, font, window, dim colors, or preference mutation.
+
+## Install and activate
+
+Copy one or both files to an Alacritty themes directory. Import exactly one: `apollo.toml` for existing dark Apollo or `apollo-light.toml` for Apollo Light. The existing dark import path must continue to select dark Apollo.
+
+## Uninstall
+
+Remove the active theme from `[general].import`, reload, then remove only the corresponding copied fragment. Scripts and tests must not make these preference changes.
+
+## Visual check
+
+Inspect selected differently colored text, cursor text, and ANSI colors 0–15 with both variants. Verify `CellForeground` preservation, the `#141617` dark canvas, the `#f9f5d7` light canvas, and ordered normal/bright slots against each palette.
 
 ## Commands
 
 ```sh
-# Build
+# Build both fragments
 python3 scripts/generate.py
 
-# Generated-file gate
+# Missing, stale, and unexpected generated-file gate
 python3 scripts/generate.py --check
 
 # Syntax lint
 python3 -m compileall -q scripts tests
 
-# Schema, colors, and drift
+# Schema, colors, both mappings, and drift
 python3 scripts/check.py
 
 # Full tests
@@ -31,6 +43,7 @@ python3 -m unittest tests.test_theme.AlacrittyThemeTests.test_native_artifact_ma
 
 # Native parser check, when Alacritty is installed
 alacritty migrate --dry-run --config-file apollo.toml >/dev/null
+alacritty migrate --dry-run --config-file apollo-light.toml >/dev/null
 ```
 
-`migrate --dry-run` checks parsing but does not replace a rendered visual check.
+Native parsing does not replace the visual check.

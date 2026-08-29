@@ -1,0 +1,32 @@
+# Generated from palette/apollo-light.json by scripts/generate.py; do not edit.
+[colors.primary]
+background = "#f9f5d7"
+foreground = "#3c3836"
+
+[colors.cursor]
+text = "#f9f5d7"
+cursor = "#8a5200"
+
+[colors.selection]
+text = "CellForeground"
+background = "#ebdbb2"
+
+[colors.normal]
+black = "#3c3836"
+red = "#9d0006"
+green = "#6b6700"
+yellow = "#8a5200"
+blue = "#076678"
+magenta = "#8f3f71"
+cyan = "#356b4d"
+white = "#504945"
+
+[colors.bright]
+black = "#665c54"
+red = "#9d0006"
+green = "#6b6700"
+yellow = "#8a5200"
+blue = "#076678"
+magenta = "#8f3f71"
+cyan = "#356b4d"
+white = "#282828"
