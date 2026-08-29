@@ -13,6 +13,8 @@ Two additional management repositories are submodules but are not application in
 - `apollo-theme.github.io/` is the organization-root GitHub Pages site and owns all generated app preview SVGs.
 - `.github/organization/` is `apollo-theme/.github`. It lives below the parent `.github/` directory because `.github/workflows/` must remain owned by this parent repository. The organization repository contains exactly one file: `profile/README.md`.
 
+Keep `.github/organization/profile/README.md` synchronized with every public-facing palette, appearance, integration, naming, preview, or release change. It must always make both Apollo Dark and Apollo Light support explicit and must not retain stale rollout or “coming soon” language.
+
 Publish the website before README changes so every embedded preview URL is live. Then publish the organization profile and application children, update repository metadata/topics, and commit the parent gitlinks last.
 
 A palette update moves outward in this order:
@@ -20,8 +22,9 @@ A palette update moves outward in this order:
 1. Update the relevant root palette and its tests without changing the other variant.
 2. Regenerate and validate both variants in every child.
 3. Publish website preview assets before README changes that embed them.
-4. Commit and push each child repository and wait for CI.
-5. Commit the resulting child and management gitlinks in the parent and push the parent last.
+4. Update and publish `.github/organization/profile/README.md` so it reflects the current Dark and Light catalog.
+5. Commit and push each child repository and wait for CI.
+6. Commit the resulting child and management gitlinks in the parent and push the parent last.
 
 Never publish a parent gitlink that points to an unpushed child commit. Rollbacks use new child commits followed by a new parent gitlink commit; do not rewrite published history.
 

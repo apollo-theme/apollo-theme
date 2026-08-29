@@ -160,6 +160,27 @@ class PaletteTests(unittest.TestCase):
                 headings = (line.removeprefix("## ") for line in readme.splitlines() if line.startswith("## "))
                 self.assertIn(metadata["install_anchor"], {markdown_anchor(heading) for heading in headings})
 
+    def test_every_app_readme_presents_dark_and_light(self):
+        for repository, metadata in APP_METADATA.items():
+            with self.subTest(repository=repository):
+                readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+                lowered = readme.lower()
+                slug = metadata["slug"]
+                self.assertIn("dark", lowered)
+                self.assertIn("light", lowered)
+                self.assertIn(f"previews/{slug}.svg", readme)
+                self.assertIn(f"previews/{slug}-light.svg", readme)
+                self.assertNotIn("light previews will appear", lowered)
+                self.assertNotIn("light coming soon", lowered)
+
+        profile = (ROOT / ".github" / "organization" / "profile" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Apollo Dark", profile)
+        self.assertIn("Apollo Light", profile)
+        self.assertIn("previews/sonicterm.svg", profile)
+        self.assertIn("previews/sonicterm-light.svg", profile)
+        self.assertNotIn("will appear", profile.lower())
+        self.assertNotIn("coming soon", profile.lower())
+
     def test_sonicterm_identity_is_allowed_only_for_target_app_language(self):
         allowed = """# SonicTerm Apollo Theme
 Apollo brings terminal colors to SonicTerm.
