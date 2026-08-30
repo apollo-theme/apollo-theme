@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from html.parser import HTMLParser
 import json
 import re
 import subprocess
@@ -22,6 +23,133 @@ EXPECTED_TOP_LEVEL = {"schemaVersion", "id", "name", "description", "appearance"
 EXPECTED_THEME_KEYS = {"name", "appearance", "colors"}
 EXPECTED_COLOR_KEYS = {"background", "foreground", "cursor", "cursor_text", "selection_bg", "selection_fg", "ansi", "bright", "tab"}
 EXPECTED_TAB_KEYS = {"bar_bg", "active_bg", "active_fg", "inactive_bg", "inactive_fg", "hover_bg", "hover_fg", "close_button_fg"}
+README_MARKERS = ('theme = "apollo"', 'theme = "apollo-light"')
+
+
+class _VisibleHTMLParser(HTMLParser):
+    HIDDEN_ELEMENTS = {"code", "pre", "script", "style", "template"}
+    VOID_ELEMENTS = {
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.stack: list[tuple[str, bool]] = []
+        self.hidden_depth = 0
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        tag = tag.lower()
+        attributes = {name.lower(): value for name, value in attrs}
+        style = re.sub(r"\s+", "", (attributes.get("style") or "").lower())
+        hidden = bool(
+            self.hidden_depth
+            or tag in self.HIDDEN_ELEMENTS
+            or "hidden" in attributes
+            or (attributes.get("aria-hidden") or "").lower() == "true"
+            or "display:none" in style
+            or "visibility:hidden" in style
+        )
+        if tag not in self.VOID_ELEMENTS:
+            self.stack.append((tag, hidden))
+            if hidden:
+                self.hidden_depth += 1
+
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        return
+
+    def handle_endtag(self, tag: str) -> None:
+        tag = tag.lower()
+        if not any(open_tag == tag for open_tag, _ in self.stack):
+            return
+        while self.stack:
+            open_tag, hidden = self.stack.pop()
+            if hidden:
+                self.hidden_depth -= 1
+            if open_tag == tag:
+                break
+
+    def handle_data(self, data: str) -> None:
+        if not self.hidden_depth:
+            self.parts.append(data)
+
+
+def _indent_width(value: str) -> int:
+    return len(value.expandtabs(4))
+
+
+def visible_prose(text: str) -> str:
+    text = re.sub(r"<!--.*?(?:-->|$)", "", text, flags=re.DOTALL)
+    lines: list[str] = []
+    fence: tuple[str, int, int] | None = None
+    for line in text.splitlines():
+        line = re.sub(r"^(?: {0,3}> ?)+", "", line)
+        if fence is not None:
+            stripped = line.lstrip(" ")
+            marker = re.match(r"(`{3,}|~{3,})", stripped)
+            if marker and len(line) - len(stripped) <= fence[2]:
+                token = marker.group(1)
+                suffix = stripped[len(token):]
+                if token[0] == fence[0] and len(token) >= fence[1] and not suffix.strip():
+                    fence = None
+            continue
+
+        list_item = re.match(
+            r"^ {0,3}(?:[-+*]|\d{1,9}[.)])(?P<indent>[ \t]+)(?P<body>.*)$",
+            line,
+        )
+        candidate = list_item.group("body") if list_item else line
+        indent = list_item.group("indent")[1:] if list_item else candidate[: len(candidate) - len(candidate.lstrip(" \t"))]
+        if _indent_width(indent) >= 4:
+            continue
+        stripped = candidate.lstrip(" ")
+        marker = re.match(r"(`{3,}|~{3,})", stripped) if len(candidate) - len(stripped) <= 3 else None
+        if marker:
+            token = marker.group(1)
+            suffix = stripped[len(token):]
+            if token[0] == "~" or "`" not in suffix:
+                base_indent = list_item.start("body") if list_item else 0
+                fence = (token[0], len(token), base_indent + 3)
+                continue
+        if not list_item and _indent_width(indent) >= 4:
+            continue
+        lines.append(line)
+
+    text = "\n".join(lines)
+    text = re.sub(r"(?<![\\`])(?P<ticks>`+)(?!`)[\s\S]*?(?<!\\)(?P=ticks)(?!`)", "", text)
+    text = re.sub(r"!\[[^\]\n]*\]\([^\n)]*\)", "", text)
+    text = re.sub(r"!\[[^\]\n]*\]\[[^\]\n]*\]", "", text)
+    text = re.sub(r"!\[[^\]\n]*\]", "", text)
+    text = re.sub(r"^ {0,3}\[[^\]\n]+\]:.*$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"(?<!!)\[([^\]\n]+)\]\([^\n)]*\)", r"\1", text)
+    text = re.sub(r"(?<!!)\[([^\]\n]+)\]\[[^\]\n]*\]", r"\1", text)
+    text = re.sub(r"(?<!!)\[([^\]\n]+)\]", r"\1", text)
+    parser = _VisibleHTMLParser()
+    parser.feed(text)
+    return " ".join(" ".join(parser.parts).split())
+
+
+def _has_exact_marker(text: str, marker: str) -> bool:
+    pattern = rf"^[ \t]*{re.escape(marker)}[ \t]*(?:#.*)?$"
+    return re.search(pattern, text, flags=re.MULTILINE) is not None
+
+
+def validate_readme_contract(text: str | None = None) -> None:
+    if text is None:
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+    prose = visible_prose(text)
+    missing = [
+        name for name in ("Apollo Dark", "Apollo Light")
+        if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-]|\.[A-Za-z0-9])", prose) is None
+    ]
+    missing.extend(marker for marker in README_MARKERS if not _has_exact_marker(text, marker))
+    if missing:
+        raise ValueError(f"README contract missing: {', '.join(missing)}")
 
 
 def require(condition: bool, message: str) -> None:
@@ -102,6 +230,7 @@ def validate_theme(theme: dict[str, Any], palette: dict[str, Any]) -> None:
 
 def main() -> int:
     try:
+        validate_readme_contract()
         for palette_id, name, appearance, alpha, palette_path, artifact_path in VARIANTS:
             palette = load_json(palette_path)
             validate_palette(palette, palette_id, name, appearance, alpha)

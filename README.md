@@ -17,7 +17,7 @@
 </p>
 <p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-`Apollo` and `apollo.toml` remain the existing dark theme. `Apollo Light` is additive and lives in `apollo-light.toml`; existing installations and activation settings are unchanged.
+**Apollo Dark** is the public name for the existing unsuffixed **Apollo** compatibility theme in `apollo.toml`. **Apollo Light** keeps its current identity in `apollo-light.toml`; existing installations and activation settings are unchanged.
 
 ## Install
 
