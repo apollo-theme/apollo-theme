@@ -17,7 +17,7 @@
 </p>
 <p align="center"><em>Simulated preview. Terminal, font, and PSReadLine rendering may vary.</em></p>
 
-Apollo is one PowerShell module that maps the canonical Dark and Light palettes to PSReadLine semantic tokens. Activation is explicit, captures the colors already in use only on first activation, and restores those true pre-Apollo values after any number of Dark/Light switches without rewriting your profile.
+Apollo Dark remains the compatibility default for unsuffixed `Enable-ApolloTheme`; Apollo Light is the explicit opt-in variant. The single PowerShell module maps both canonical palettes to PSReadLine semantic tokens. Activation captures the colors already in use only on first activation and restores those true pre-Apollo values after any number of Dark/Light switches without rewriting your profile.
 
 ## Install
 
@@ -35,8 +35,9 @@ Import and enable either variant for the current session. Dark remains the defau
 
 ```powershell
 Import-Module "$HOME/.config/powershell-apollo-theme/ApolloTheme.psd1" -Force
-Enable-ApolloTheme                 # Dark
-Enable-ApolloTheme -Variant Light  # Light
+Enable-ApolloTheme                 # Dark compatibility default
+Enable-ApolloTheme -Variant Dark   # Explicit Dark
+Enable-ApolloTheme -Variant Light  # Explicit Light
 ```
 
 `Get-ApolloPSReadLineColors` accepts the same `-Variant Dark|Light` parameter. Apollo Light changes PSReadLine token colors only, so use it with a terminal profile that has a light background.
