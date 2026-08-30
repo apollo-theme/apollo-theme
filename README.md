@@ -20,7 +20,7 @@
 
 ## About
 
-This standalone tmux repository ships `apollo.tmux` (Dark) and `apollo-light.tmux` (Light). Each changes colors only: no prefix, key bindings, status content, commands, plugins, hooks, or shell behavior. Source exactly one variant at a time.
+Apollo Dark preserves the existing unsuffixed `apollo.tmux` artifact and default selector for compatibility. Apollo Light is the explicit `apollo-light.tmux` companion. Each changes colors only: no prefix, key bindings, status content, commands, plugins, hooks, or shell behavior. Source exactly one variant at a time.
 
 Repository: <https://github.com/apollo-theme/tmux-apollo-theme>
 
@@ -60,12 +60,21 @@ A running server keeps its current option values; reload your usual theme/config
 
 ## Visual check
 
-Open or attach to a tmux session. The status canvas should be near-black with warm primary text, the active window should be blue, active pane borders and messages should be gold, and alerts should be red. Confirm the base status values with:
+Open or attach to a tmux session, then source and query Apollo Dark before Apollo Light:
 
 ```sh
+# Apollo Dark
+tmux source-file "$HOME/.config/tmux-apollo-theme/apollo.tmux"
 tmux show-options -gv status-style
 # bg=#141617,fg=#cfbc97
+
+# Apollo Light
+tmux source-file "$HOME/.config/tmux-apollo-theme/apollo-light.tmux"
+tmux show-options -gv status-style
+# bg=#f9f5d7,fg=#3c3836
 ```
+
+For Apollo Dark, the status canvas should be near-black with warm primary text. For Apollo Light, it should use a warm light canvas with dark text. In both variants, the active window, pane borders, messages, and alerts should remain distinct.
 
 ## Development
 
