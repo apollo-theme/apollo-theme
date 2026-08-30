@@ -11,19 +11,28 @@
 [![Release](https://img.shields.io/github/v/release/apollo-theme/apollo-theme?style=for-the-badge&labelColor=141617&color=83a598)](https://github.com/apollo-theme/apollo-theme/releases/latest)
 [![License](https://img.shields.io/github/license/apollo-theme/apollo-theme?style=for-the-badge&labelColor=141617&color=b8bb26)](LICENSE)
 
-[![Explore Apollo Theme](https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm.svg)](https://apollo-theme.github.io/)
+<table>
+<tr>
+<th>Apollo Dark</th>
+<th>Apollo Light</th>
+</tr>
+<tr>
+<td><a href="https://apollo-theme.github.io/#app-sonicterm-dark"><img alt="Apollo Dark simulated SonicTerm preview" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm.svg" width="440"></a></td>
+<td><a href="https://apollo-theme.github.io/#app-sonicterm-light"><img alt="Apollo Light simulated SonicTerm preview" src="https://raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/sonicterm-light.svg" width="440"></a></td>
+</tr>
+</table>
 
-*Simulated previews — explore Dark and Light across all 17 integrations.*
+*Simulated previews — explore Apollo Dark and Apollo Light across all 17 integrations.*
 
 </div>
 
-Apollo is a high-contrast color system with dark and light appearances, built for sharp focus and a workspace that feels continuous from terminal to editor. Existing `Apollo` / `apollo` names remain the dark compatibility identity; the additive light appearance is `Apollo Light` / `apollo-light`.
+Apollo is a high-contrast color system with dark and light appearances, built for sharp focus and a workspace that feels continuous from terminal to editor. Existing unsuffixed `Apollo` / `apollo` files, selectors, packages, and activation paths remain Apollo Dark compatibility identities; the additive light appearance is `Apollo Light` / `apollo-light`.
 
 ## Signal palettes
 
 | Appearance | Canvas | Surface | Text | Focus | Selection | Error | Success | Info |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Apollo** | `#141617` | `#1d2021` | `#cfbc97` | `#fabd2f` | `#3c3836` | `#fb4934` | `#b8bb26` | `#83a598` |
+| **Apollo Dark** | `#141617` | `#1d2021` | `#cfbc97` | `#fabd2f` | `#3c3836` | `#fb4934` | `#b8bb26` | `#83a598` |
 | **Apollo Light** | `#f9f5d7` | `#fbf1c7` | `#3c3836` | `#8a5200` | `#ebdbb2` | `#9d0006` | `#6b6700` | `#076678` |
 
 The machine-readable sources are [`palette/apollo.json`](palette/apollo.json) and [`palette/apollo-light.json`](palette/apollo-light.json). Every application repository carries exact snapshots and deterministic native adapters for both.

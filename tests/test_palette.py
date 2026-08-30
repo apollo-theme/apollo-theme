@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -18,7 +19,7 @@ from common import (
     load_palettes,
     markdown_anchor,
 )
-from check import forbidden_identity_terms, public_identity_metadata
+from check import check_readme_contract, forbidden_identity_terms, public_identity_metadata, visible_prose
 
 
 class PaletteTests(unittest.TestCase):
@@ -160,26 +161,450 @@ class PaletteTests(unittest.TestCase):
                 headings = (line.removeprefix("## ") for line in readme.splitlines() if line.startswith("## "))
                 self.assertIn(metadata["install_anchor"], {markdown_anchor(heading) for heading in headings})
 
-    def test_every_app_readme_presents_dark_and_light(self):
-        for repository, metadata in APP_METADATA.items():
-            with self.subTest(repository=repository):
-                readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
-                lowered = readme.lower()
-                slug = metadata["slug"]
-                self.assertIn("dark", lowered)
-                self.assertIn("light", lowered)
-                self.assertIn(f"previews/{slug}.svg", readme)
-                self.assertIn(f"previews/{slug}-light.svg", readme)
-                self.assertNotIn("light previews will appear", lowered)
-                self.assertNotIn("light coming soon", lowered)
+    def test_visible_prose_excludes_non_visible_appearance_names(self):
+        prose = visible_prose(
+            """
+![Apollo Dark](previews/dark.svg)
+[![Apollo Light](https://img.shields.io/badge/appearance-Apollo%20Light-blue)](https://example.com)
+<!-- Apollo Dark and Apollo Light -->
+<span hidden>Apollo Dark</span>
+<div aria-hidden="true">Apollo Light</div>
+```text
+Apollo Dark
+```
+~~~text
+Apollo Light
+~~~
 
-        profile = (ROOT / ".github" / "organization" / "profile" / "README.md").read_text(encoding="utf-8")
-        self.assertIn("Apollo Dark", profile)
-        self.assertIn("Apollo Light", profile)
-        self.assertIn("previews/sonicterm.svg", profile)
-        self.assertIn("previews/sonicterm-light.svg", profile)
-        self.assertNotIn("will appear", profile.lower())
-        self.assertNotIn("coming soon", profile.lower())
+    Apollo Dark
+	Apollo Light
+`Apollo Dark` and ``Apollo Light``
+Apollo Dark.theme
+Apollo Light.txt
+"""
+        )
+        self.assertNotRegex(prose, r"(?<![\w-])Apollo Dark(?![\w-])")
+        self.assertNotRegex(prose, r"(?<![\w-])Apollo Light(?![\w-])")
+
+    def test_visible_prose_excludes_padded_inline_code_without_crossing_lines(self):
+        prose = visible_prose(
+            "before `` Apollo Dark `` between ```  Apollo Light  ``` after\n"
+            "long ```` `Apollo Dark` ```` and ````` ``Apollo Light`` `````\n"
+            "first `unmatched Apollo Dark\n"
+            "second line stays visible\n"
+            "third ```unmatched Apollo Light\n"
+            "fourth line stays visible"
+        )
+        self.assertIn("before  between  after", prose)
+        self.assertIn("long  and ", prose)
+        self.assertIn("first `unmatched Apollo Dark", prose)
+        self.assertIn("second line stays visible", prose)
+        self.assertIn("third ```unmatched Apollo Light", prose)
+        self.assertIn("fourth line stays visible", prose)
+
+    def test_visible_prose_accepts_longer_markdown_fence_closers(self):
+        prose = visible_prose(
+            """
+before
+   ```text
+Apollo Dark
+   ````
+between
+   ~~~ text
+Apollo Light
+   ~~~~~\t
+after
+"""
+        )
+        self.assertNotIn("Apollo Dark", prose)
+        self.assertNotIn("Apollo Light", prose)
+        self.assertIn("before", prose)
+        self.assertIn("between", prose)
+        self.assertIn("after", prose)
+
+    def test_visible_prose_keeps_mismatched_and_unclosed_fences_hidden(self):
+        prose = visible_prose(
+            """
+before
+~~~~text
+Apollo Dark
+~~~
+Apollo Light
+`````
+Apollo Dark after mismatched marker
+~~~~ not-a-closer
+Apollo Light after invalid suffix
+~~~~
+between
+```text
+Apollo Dark remains fenced to EOF
+"""
+        )
+        self.assertNotIn("Apollo Dark", prose)
+        self.assertNotIn("Apollo Light", prose)
+        self.assertIn("before", prose)
+        self.assertIn("between", prose)
+
+    def test_visible_prose_does_not_treat_inline_triple_backticks_as_a_fence(self):
+        prose = visible_prose("```Apollo Dark``` after inline code\nApollo Light remains visible")
+        self.assertNotIn("Apollo Dark", prose)
+        self.assertIn("after inline code", prose)
+        self.assertIn("Apollo Light remains visible", prose)
+
+    def test_visible_prose_excludes_code_inside_markdown_blockquotes(self):
+        prose = visible_prose(
+            """
+> Visible quoted prose before.
+> ```text
+> Apollo Dark
+> Apollo Light
+> `````
+> Visible quoted prose after.
+>
+>     Apollo Dark indented code
+>\tApollo Light tab-indented code
+> Visible quoted Apollo Dark prose remains.
+"""
+        )
+        self.assertNotIn("Apollo Light", prose)
+        self.assertNotIn("Apollo Dark indented code", prose)
+        self.assertNotIn("Apollo Light tab-indented code", prose)
+        self.assertIn("Visible quoted prose before.", prose)
+        self.assertIn("Visible quoted prose after.", prose)
+        self.assertIn("Visible quoted Apollo Dark prose remains.", prose)
+
+    def test_visible_prose_excludes_fenced_code_inside_markdown_lists(self):
+        prose = visible_prose(
+            """
+- Visible unordered prose before.
+- ~~~text
+  Apollo Dark in unordered code
+  Apollo Light in unordered code
+  ~~~~~
+- Visible unordered Apollo Dark prose after.
+
+1. Visible ordered prose before.
+2. ```text
+   Apollo Dark in ordered code
+   Apollo Light in ordered code
+   `````
+3. Visible ordered Apollo Light prose after.
+"""
+        )
+        self.assertNotIn("Apollo Dark in unordered code", prose)
+        self.assertNotIn("Apollo Light in unordered code", prose)
+        self.assertNotIn("Apollo Dark in ordered code", prose)
+        self.assertNotIn("Apollo Light in ordered code", prose)
+        self.assertIn("Visible unordered prose before.", prose)
+        self.assertIn("Visible unordered Apollo Dark prose after.", prose)
+        self.assertIn("Visible ordered prose before.", prose)
+        self.assertIn("Visible ordered Apollo Light prose after.", prose)
+
+    def test_visible_prose_excludes_indented_code_inside_markdown_lists(self):
+        prose = visible_prose(
+            """
+- Visible unordered prose before.
+-     Apollo Dark in unordered indented code
+- Visible unordered Apollo Light prose after.
+
+1. Visible ordered prose before.
+2.     Apollo Light in ordered indented code
+3. Visible ordered Apollo Dark prose after.
+"""
+        )
+        self.assertNotIn("Apollo Dark in unordered indented code", prose)
+        self.assertNotIn("Apollo Light in ordered indented code", prose)
+        self.assertIn("Visible unordered prose before.", prose)
+        self.assertIn("Visible unordered Apollo Light prose after.", prose)
+        self.assertIn("Visible ordered prose before.", prose)
+        self.assertIn("Visible ordered Apollo Dark prose after.", prose)
+
+    def test_visible_prose_excludes_mixed_space_tab_indented_code(self):
+        prose = visible_prose(" \tApollo Dark\n   \tApollo Light\n")
+        self.assertNotIn("Apollo Dark", prose)
+        self.assertNotIn("Apollo Light", prose)
+
+    def test_visible_prose_excludes_multiline_inline_code_spans(self):
+        prose = visible_prose(
+            "before `` padded Apollo Dark\nand Apollo Light `` after closing delimiter\n"
+            "visible Apollo Dark prose\n"
+            "unmatched `Apollo Light stays visible"
+        )
+        self.assertNotIn("padded Apollo Dark", prose)
+        self.assertNotIn("and Apollo Light", prose)
+        self.assertIn("before ", prose)
+        self.assertIn(" after closing delimiter", prose)
+        self.assertIn("visible Apollo Dark prose", prose)
+        self.assertIn("unmatched `Apollo Light stays visible", prose)
+
+    def test_visible_prose_preserves_escaped_backticks_as_visible_text(self):
+        prose = visible_prose(r"Escaped \`Apollo Dark\` and \`Apollo Light\` remain visible.")
+        self.assertIn(r"\`Apollo Dark\`", prose)
+        self.assertIn(r"\`Apollo Light\`", prose)
+
+    def test_visible_prose_hides_unclosed_html_comments_through_eof(self):
+        prose = visible_prose(
+            "Visible Apollo Dark prose before.\n"
+            "<!-- Apollo Light hidden in unclosed comment\n"
+            "Apollo Dark hidden through EOF"
+        )
+        self.assertIn("Visible Apollo Dark prose before.", prose)
+        self.assertNotIn("Apollo Light hidden in unclosed comment", prose)
+        self.assertNotIn("Apollo Dark hidden through EOF", prose)
+
+    def test_visible_prose_excludes_raw_html_containers_and_preserves_ordinary_html(self):
+        prose = visible_prose(
+            """
+<code>Apollo Dark code</code>
+<pre>Apollo Light pre</pre>
+<script>Apollo Dark script</script>
+<style>Apollo Light style</style>
+<template>Apollo Dark template</template>
+<p>Ordinary <strong>HTML</strong> keeps an <a href="/dark">Apollo Dark</a> link.</p>
+"""
+        )
+        for hidden_text in ("code", "pre", "script", "style", "template"):
+            self.assertNotIn(f"Apollo Dark {hidden_text}", prose)
+            self.assertNotIn(f"Apollo Light {hidden_text}", prose)
+        self.assertIn("Ordinary HTML keeps an Apollo Dark link.", prose)
+
+    def test_visible_prose_honors_html_hidden_attributes_and_styles(self):
+        prose = visible_prose(
+            """
+<span aria-hidden>Apollo Dark bare</span>
+<span aria-hidden="true">Apollo Light double quoted</span>
+<span aria-hidden='true'>Apollo Dark single quoted</span>
+<span aria-hidden=true>Apollo Light unquoted</span>
+<span style="display: none">Apollo Dark display</span>
+<span style='visibility:hidden'>Apollo Light visibility</span>
+<span aria-hidden="false">Apollo Dark false is visible</span>
+<span style="display: block; visibility: visible">Apollo Light style is visible</span>
+"""
+        )
+        for hidden_text in (
+            "Apollo Dark bare",
+            "Apollo Light double quoted",
+            "Apollo Dark single quoted",
+            "Apollo Light unquoted",
+            "Apollo Dark display",
+            "Apollo Light visibility",
+        ):
+            self.assertNotIn(hidden_text, prose)
+        self.assertIn("Apollo Dark false is visible", prose)
+        self.assertIn("Apollo Light style is visible", prose)
+
+    def test_visible_prose_uses_a_tag_stack_for_nested_hidden_html(self):
+        prose = visible_prose(
+            """
+<section hidden>
+Apollo Dark outer
+<span aria-hidden="false">Apollo Light nested</span>
+</unexpected>
+Apollo Dark after unmatched close
+</section>
+<div>Visible before <span hidden>Apollo Light child</span> visible after child.</div>
+"""
+        )
+        self.assertNotIn("Apollo Dark outer", prose)
+        self.assertNotIn("Apollo Light nested", prose)
+        self.assertNotIn("Apollo Dark after unmatched close", prose)
+        self.assertNotIn("Apollo Light child", prose)
+        self.assertIn("Visible before  visible after child.", prose)
+
+    def test_visible_prose_excludes_hidden_void_elements_without_hiding_following_prose(self):
+        prose = visible_prose('<img hidden alt="Apollo Dark">Apollo Light')
+        self.assertNotRegex(prose, r"(?<![\w-])Apollo Dark(?![\w-])")
+        self.assertRegex(prose, r"(?<![\w-])Apollo Light(?![\w-])")
+
+    def test_visible_prose_excludes_all_markdown_image_forms(self):
+        prose = visible_prose(
+            """
+![Apollo Dark](previews/dark.svg)
+![Apollo Light][light-full]
+![Apollo Dark][]
+![Apollo Light]
+
+[light-full]: previews/light-full.svg
+[Apollo Dark]: previews/dark-collapsed.svg
+[Apollo Light]: previews/light-shortcut.svg
+"""
+        )
+        self.assertNotRegex(prose, r"(?<![\w-])Apollo Dark(?![\w-])")
+        self.assertNotRegex(prose, r"(?<![\w-])Apollo Light(?![\w-])")
+
+    def test_visible_prose_retains_markdown_link_labels(self):
+        prose = visible_prose(
+            """
+[Apollo Dark](README.md), [Apollo Light][light], [Apollo Dark][], and [Apollo Light].
+[Theme](guide.md "Apollo Dark") and [Another theme](Apollo Light.md).
+
+[light]: docs/light.md "Apollo Light"
+[Apollo Dark]: docs/dark.md
+[Apollo Light]: docs/light-shortcut.md
+"""
+        )
+        self.assertEqual(2, len(re.findall(r"(?<![\w-])Apollo Dark(?![\w-])", prose)))
+        self.assertEqual(2, len(re.findall(r"(?<![\w-])Apollo Light(?![\w-])", prose)))
+
+    def test_readme_contract_accepts_injected_visible_appearance_names(self):
+        repository = "eza-apollo-theme"
+        readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+        without_visible_names = readme.replace("Apollo Dark", "Dark appearance").replace(
+            "Apollo Light", "Light appearance"
+        )
+        with self.assertRaisesRegex(ValueError, "visible appearance names.*Apollo Dark.*Apollo Light"):
+            check_readme_contract(repository, without_visible_names)
+        check_readme_contract(
+            repository,
+            without_visible_names + "\n[**Apollo Dark**](#dark) and [**Apollo Light**](#light).\n",
+        )
+
+    def test_every_app_readme_presents_dark_and_light(self):
+        failures = {}
+        for repository, metadata in APP_METADATA.items():
+            readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+            prose = visible_prose(readme)
+            slug = metadata["slug"]
+            missing_names = [
+                name
+                for name in ("Apollo Dark", "Apollo Light")
+                if not re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", prose)
+            ]
+            missing_previews = [
+                preview
+                for preview in (f"previews/{slug}.svg", f"previews/{slug}-light.svg")
+                if preview not in readme
+            ]
+            lowered = readme.lower()
+            stale_phrases = [
+                phrase
+                for phrase in ("light previews will appear", "light coming soon")
+                if phrase in lowered
+            ]
+            if missing_names or missing_previews or stale_phrases:
+                failures[repository] = {
+                    "missing visible names": missing_names,
+                    "missing previews": missing_previews,
+                    "stale phrases": stale_phrases,
+                }
+        if failures:
+            details = "\n".join(
+                f"{repository}: "
+                + ", ".join(
+                    f"{contract}={value}"
+                    for contract, value in contracts.items()
+                    if value
+                )
+                for repository, contracts in failures.items()
+            )
+            self.fail(f"child README contracts failed:\n{details}")
+
+    def test_authoritative_readmes_present_the_dark_light_contract(self):
+        surfaces = {
+            "parent": ROOT / "README.md",
+            "pages": ROOT / "apollo-theme.github.io" / "README.md",
+            "profile": ROOT / ".github" / "organization" / "profile" / "README.md",
+        }
+        stale_phrases = (
+            "coming soon",
+            "will appear",
+            "one night palette",
+            "viewport pass pending",
+            "17 previews verified",
+        )
+        readmes = {name: path.read_text(encoding="utf-8") for name, path in surfaces.items()}
+
+        failures = {}
+        for name, readme in readmes.items():
+            prose = visible_prose(readme)
+            missing_names = [
+                appearance
+                for appearance in ("Apollo Dark", "Apollo Light")
+                if not re.search(rf"(?<![\w-]){re.escape(appearance)}(?![\w-])", prose)
+            ]
+            compatibility_sentences = re.split(r"(?<=[.!?])\s+", prose)
+            missing_compatibility_prose = not any(
+                "Apollo Dark" in sentence
+                and "unsuffixed" in sentence.lower()
+                and "compatibility" in sentence.lower()
+                for sentence in compatibility_sentences
+            )
+            missing_previews = [
+                preview
+                for preview in ("previews/sonicterm.svg", "previews/sonicterm-light.svg")
+                if preview not in readme
+            ]
+            lowered = readme.lower()
+            found_stale_phrases = [phrase for phrase in stale_phrases if phrase in lowered]
+            if missing_names or missing_compatibility_prose or missing_previews or found_stale_phrases:
+                failures[name] = {
+                    "missing visible names": missing_names,
+                    "missing compatibility prose": missing_compatibility_prose,
+                    "missing previews": missing_previews,
+                    "stale phrases": found_stale_phrases,
+                }
+        parent = readmes["parent"]
+        missing_palette_rows = [
+            row
+            for row in ("| **Apollo Dark** |", "| **Apollo Light** |")
+            if row not in parent
+        ]
+        compatibility_sentence = (
+            "Existing unsuffixed `Apollo` / `apollo` files, selectors, packages, and activation paths "
+            "remain Apollo Dark compatibility identities"
+        )
+        missing_preview_links = [
+            link
+            for link in (
+                "https://apollo-theme.github.io/#app-sonicterm-dark",
+                "https://apollo-theme.github.io/#app-sonicterm-light",
+            )
+            if link not in parent
+        ]
+        missing_parent_integrations = [
+            repository for repository in REPOSITORIES if f"]({repository})" not in parent
+        ]
+        if (
+            missing_palette_rows
+            or compatibility_sentence not in parent
+            or missing_preview_links
+            or missing_parent_integrations
+        ):
+            failures["parent details"] = {
+                "missing palette rows": missing_palette_rows,
+                "missing exact compatibility sentence": compatibility_sentence not in parent,
+                "missing preview links": missing_preview_links,
+                "missing integrations": missing_parent_integrations,
+            }
+
+        profile = readmes["profile"]
+        missing_profile_palette_rows = [
+            row
+            for row in ("| **Apollo Dark** |", "| **Apollo Light** |")
+            if row not in profile
+        ]
+        missing_profile_repositories = [
+            repository
+            for repository in REPOSITORIES
+            if f"https://github.com/apollo-theme/{repository}" not in profile
+        ]
+        if missing_profile_palette_rows or missing_profile_repositories:
+            failures["profile details"] = {
+                "missing palette rows": missing_profile_palette_rows,
+                "missing repository links": missing_profile_repositories,
+            }
+
+        if failures:
+            details = "\n".join(
+                f"{surface}: "
+                + ", ".join(
+                    f"{contract}={value}"
+                    for contract, value in contracts.items()
+                    if value
+                )
+                for surface, contracts in failures.items()
+            )
+            self.fail(f"authoritative README contracts failed:\n{details}")
 
     def test_sonicterm_identity_is_allowed_only_for_target_app_language(self):
         allowed = """# SonicTerm Apollo Theme
