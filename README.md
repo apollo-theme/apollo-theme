@@ -17,6 +17,8 @@
 </p>
 <p align="center"><sub><strong>Simulated preview.</strong> Font, terminal, and syntax rendering may vary; Apollo supplies both GUI colors and xterm-256 fallbacks.</sub></p>
 
+The public **Apollo Dark** variant uses the existing `apollo` colorscheme and unsuffixed compatibility identity; **Apollo Light** uses the existing `apollo-light` colorscheme.
+
 ## Highlights
 
 - Native Vim UI, syntax, diff, and diagnostic highlighting.
