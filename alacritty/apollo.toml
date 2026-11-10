@@ -1,0 +1,32 @@
+# Generated from palette/apollo.json by scripts/generate.py; do not edit.
+[colors.primary]
+background = "#141617"
+foreground = "#cfbc97"
+
+[colors.cursor]
+text = "#141617"
+cursor = "#fabd2f"
+
+[colors.selection]
+text = "CellForeground"
+background = "#3c3836"
+
+[colors.normal]
+black = "#1d2021"
+red = "#fb4934"
+green = "#b8bb26"
+yellow = "#fabd2f"
+blue = "#83a598"
+magenta = "#d3869b"
+cyan = "#8ec07c"
+white = "#d5c4a1"
+
+[colors.bright]
+black = "#665c54"
+red = "#fb4934"
+green = "#b8bb26"
+yellow = "#fabd2f"
+blue = "#83a598"
+magenta = "#d3869b"
+cyan = "#8ec07c"
+white = "#fbf1c7"
