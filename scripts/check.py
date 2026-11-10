@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -10,13 +11,11 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from common import (
-    APP_METADATA,
+    APPS,
     FORBIDDEN_LINEAGE_PHRASES,
     HEX_COLOR,
-    LIGHT_ARTIFACTS,
-    MANAGEMENT_REPOSITORIES,
-    REPOSITORIES,
     ROOT,
+    SLUGS,
     contrast_ratio,
     iter_hex_colors,
     load_palette,
@@ -150,50 +149,21 @@ def check_palette() -> None:
             raise ValueError("dark: restricted bright black no longer needs its usage constraint")
 
 
-def check_submodules() -> None:
-    gitmodules = ROOT / ".gitmodules"
-    if not gitmodules.exists():
-        raise FileNotFoundError(".gitmodules is missing")
-    output = subprocess.run(
-        ["git", "config", "--file", str(gitmodules), "--get-regexp", r"^submodule\..*\.(path|url)$"],
-        cwd=ROOT,
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout
-    entries: dict[str, dict[str, str]] = {}
-    for line in output.splitlines():
-        key, value = line.split(maxsplit=1)
-        prefix, field = key.rsplit(".", 1)
-        entries.setdefault(prefix, {})[field] = value
-    expected_paths = set(REPOSITORIES) | set(MANAGEMENT_REPOSITORIES)
-    paths = {entry.get("path") for entry in entries.values()}
-    if paths != expected_paths:
-        missing = sorted(expected_paths - paths)
-        extra = sorted(paths - expected_paths)
-        raise ValueError(f"submodule paths differ: missing={missing}, extra={extra}")
-    for entry in entries.values():
-        path = entry["path"]
-        expected_url = MANAGEMENT_REPOSITORIES.get(path, f"https://github.com/apollo-theme/{path}.git")
-        if entry.get("url") != expected_url:
-            raise ValueError(f"{path}: expected submodule URL {expected_url}")
-    states = subprocess.run(
-        ["git", "submodule", "status", "--recursive"],
-        cwd=ROOT,
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout.splitlines()
-    if len(states) != len(expected_paths) or any(line.startswith(("-", "+", "U")) for line in states):
-        raise ValueError("submodules are missing, conflicted, or not at recorded commits")
+def check_layout() -> None:
+    if (ROOT / ".gitmodules").exists():
+        raise ValueError(".gitmodules must not exist")
+    for slug in SLUGS:
+        if not (ROOT / slug).is_dir() or (ROOT / slug / ".git").exists():
+            raise ValueError(f"{slug}: must be a plain tracked folder")
 
-    profile_files = sorted(
-        path.relative_to(ROOT / ".github" / "organization").as_posix()
-        for path in (ROOT / ".github" / "organization").rglob("*")
-        if path.is_file() and ".git" not in path.parts
-    )
-    if profile_files != ["profile/README.md"]:
-        raise ValueError(f"organization profile repository must contain only profile/README.md, got {profile_files}")
+
+def check_source_pin(root: Path = ROOT) -> None:
+    pin = json.loads((root / "palette" / "SOURCE.json").read_text(encoding="utf-8"))
+    if pin.get("repository") != "https://github.com/apollo-theme/apollo-palette" or not re.fullmatch(r"[0-9a-f]{40}", pin.get("commit", "")):
+        raise ValueError("SOURCE.json: repository or commit invalid")
+    for name in ("apollo.json", "apollo-light.json"):
+        if hashlib.sha256((root / "palette" / name).read_bytes()).hexdigest() != pin["sha256"].get(name):
+            raise ValueError(f"SOURCE.json: {name} sha256 mismatch")
 
 
 def public_identity_metadata(directory: Path) -> str:
@@ -369,22 +339,22 @@ def visible_prose(text: str) -> str:
     return re.sub(r"(?<![\w-])Apollo (?:Dark|Light)\.[^\s]+", "", prose, flags=re.IGNORECASE)
 
 
-def forbidden_identity_terms(repository: str, text: str) -> list[str]:
+def forbidden_identity_terms(slug: str, text: str) -> list[str]:
     lowered = text.lower()
     forbidden = [phrase for phrase in FORBIDDEN_LINEAGE_PHRASES if phrase in lowered]
     prose = visible_prose(lowered)
     references = [line for line in prose.splitlines() if re.search(r"\bsonicterm\b", line)]
     if references:
-        if repository != "sonicterm-apollo-theme":
+        if slug != "sonicterm":
             forbidden.append("sonicterm")
         elif any(re.search(r"\b(lineage|provenance|upstream|derived|inspired|starting point|based on)\b", line) for line in references):
             forbidden.append("sonicterm")
     return list(dict.fromkeys(forbidden))
 
 
-def check_readme_contract(repository: str, readme: str | None = None) -> None:
-    metadata = APP_METADATA[repository]
-    directory = ROOT / repository
+def check_readme_contract(slug: str, readme: str | None = None) -> None:
+    metadata = APPS[slug]
+    directory = ROOT / slug
     if readme is None:
         readme = (directory / "README.md").read_text(encoding="utf-8")
     public_metadata = [
@@ -398,14 +368,14 @@ def check_readme_contract(repository: str, readme: str | None = None) -> None:
         f"<h1 align=\"center\">{metadata['name']} Apollo Themes</h1>",
     )
     required_fragments = {
-        "workflow badge": f"img.shields.io/github/actions/workflow/status/apollo-theme/{repository}/{metadata['workflow']}",
-        "release badge": f"img.shields.io/github/v/release/apollo-theme/{repository}",
+        "workflow badge": "img.shields.io/github/actions/workflow/status/apollo-theme/",
+        "release badge": "img.shields.io/github/v/release/apollo-theme/",
         "preview badge": 'alt="Preview"',
         "canonical palette badge": "img.shields.io/badge/palette-canonical-",
-        "dark preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{metadata['slug']}.svg",
-        "dark website deep link": f"https://apollo-theme.github.io/#app-{metadata['slug']}",
-        "light preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{metadata['slug']}-light.svg",
-        "light website deep link": f"https://apollo-theme.github.io/#app-{metadata['slug']}-light",
+        "dark preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{slug}.svg",
+        "dark website deep link": f"https://apollo-theme.github.io/#app-{slug}",
+        "light preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{slug}-light.svg",
+        "light website deep link": f"https://apollo-theme.github.io/#app-{slug}-light",
         "light variant name": "Apollo Light",
         "simulation caption": "simulated preview",
     }
@@ -417,8 +387,7 @@ def check_readme_contract(repository: str, readme: str | None = None) -> None:
     if metadata["install_anchor"] not in anchors:
         missing.append("install section")
     lowered = readme.lower()
-    license_links = ('href="license"', f'href="https://github.com/apollo-theme/{repository}/blob/main/license"')
-    if not any(link in lowered for link in license_links):
+    if 'href="license"' not in lowered and not re.search(r'href="https://github\.com/apollo-theme/[^"/]+/blob/main/license"', lowered):
         missing.append("license link")
     if "img.shields.io/badge/license-mit" not in lowered and "img.shields.io/github/license/" not in lowered:
         missing.append("license badge")
@@ -434,56 +403,58 @@ def check_readme_contract(repository: str, readme: str | None = None) -> None:
     if missing_appearances:
         missing.append(f"visible appearance names {missing_appearances}")
     if missing:
-        raise ValueError(f"{repository}: README branding contract missing {missing}")
-    forbidden = forbidden_identity_terms(repository, combined)
+        raise ValueError(f"{slug}: README branding contract missing {missing}")
+    forbidden = forbidden_identity_terms(slug, combined)
     if forbidden:
-        raise ValueError(f"{repository}: forbidden lineage phrases {forbidden}")
+        raise ValueError(f"{slug}: forbidden lineage phrases {forbidden}")
 
 
-def check_repository(repository: str, native: bool) -> None:
-    directory = ROOT / repository
+def check_repository(slug: str, native: bool) -> None:
+    directory = ROOT / slug
+    light_artifact = APPS[slug]["light_artifact"]
     required = (".gitattributes", "README.md", "CLAUDE.md", "LICENSE", "palette/apollo.json", "palette/apollo-light.json", "scripts/generate.py", "scripts/check.py")
     missing = [path for path in required if not (directory / path).exists()]
-    if not (directory / LIGHT_ARTIFACTS[repository]).exists():
-        missing.append(LIGHT_ARTIFACTS[repository])
+    if not (directory / light_artifact).exists():
+        missing.append(light_artifact)
     if missing:
-        raise FileNotFoundError(f"{repository}: missing {', '.join(missing)}")
+        raise FileNotFoundError(f"{slug}: missing {', '.join(missing)}")
     attributes = (directory / ".gitattributes").read_text(encoding="utf-8").splitlines()
     if "* text=auto eol=lf" not in attributes:
-        raise ValueError(f"{repository}: .gitattributes must preserve LF across Windows checkouts")
+        raise ValueError(f"{slug}: .gitattributes must preserve LF across Windows checkouts")
     for variant, filename in (("dark", "apollo.json"), ("light", "apollo-light.json")):
         snapshot_path = directory / "palette" / filename
         canonical_path = ROOT / "palette" / filename
         if snapshot_path.read_bytes() != canonical_path.read_bytes():
-            raise ValueError(f"{repository}: {variant} palette snapshot differs byte-for-byte from canonical palette")
-    check_readme_contract(repository)
-    if repository == "firefox-apollo-theme":
+            raise ValueError(f"{slug}: {variant} palette snapshot differs byte-for-byte from canonical palette")
+    check_readme_contract(slug)
+    if slug == "firefox":
         dark_manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         light_manifest_path = directory / "variants" / "light" / "manifest.json"
         if not light_manifest_path.exists():
-            raise FileNotFoundError("firefox-apollo-theme: missing variants/light/manifest.json")
+            raise FileNotFoundError("firefox: missing variants/light/manifest.json")
         light_manifest = json.loads(light_manifest_path.read_text(encoding="utf-8"))
         dark_guid = dark_manifest["browser_specific_settings"]["gecko"]["id"]
         light_guid = light_manifest["browser_specific_settings"]["gecko"]["id"]
         if dark_guid != "humble-apollo@d0n9x1n":
-            raise ValueError("firefox-apollo-theme: dark Gecko GUID changed")
+            raise ValueError("firefox: dark Gecko GUID changed")
         if light_guid != "apollo-light@d0n9x1n" or light_guid == dark_guid:
-            raise ValueError("firefox-apollo-theme: light Gecko GUID is missing or collides with dark")
+            raise ValueError("firefox: light Gecko GUID is missing or collides with dark")
     subprocess.run([sys.executable, "scripts/generate.py", "--check"], cwd=directory, check=True)
     if native:
         subprocess.run([sys.executable, "scripts/check.py"], cwd=directory, check=True)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate the Apollo palette and application repositories")
-    parser.add_argument("--repo", choices=REPOSITORIES, action="append", help="limit validation to a repository")
-    parser.add_argument("--native", action="store_true", help="also run each selected child's app-specific checker")
+    parser = argparse.ArgumentParser(description="Validate the Apollo palette and application folders")
+    parser.add_argument("--app", choices=SLUGS, action="append", help="limit validation to an app folder")
+    parser.add_argument("--native", action="store_true", help="also run each selected app's own checker")
     args = parser.parse_args()
-    check_submodules()
+    check_layout()
+    check_source_pin()
     check_palette()
-    for repository in tuple(args.repo or REPOSITORIES):
-        check_repository(repository, args.native)
-        print(f"{repository}: valid{' with native checks' if args.native else ''}")
+    for slug in tuple(args.app or SLUGS):
+        check_repository(slug, args.native)
+        print(f"{slug}: valid{' with native checks' if args.native else ''}")
     return 0
 
 

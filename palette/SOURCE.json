@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/apollo-theme/apollo-palette",
+  "commit": "24f6b2e51282a34e2759561f20550eda5d5267e6",
+  "sha256": {
+    "apollo.json": "550f8c36cf4ef6ac99551541d1fe9554f77d563fa1e7c129a6a82583321d61ef",
+    "apollo-light.json": "b0dbdeb719ed1931c424e9590562689325ecac1609e2fed6406ec5c4d3dc5763"
+  }
+}

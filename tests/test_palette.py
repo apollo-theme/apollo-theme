@@ -8,12 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+import common
 from common import (
-    APP_METADATA,
-    LIGHT_ARTIFACTS,
-    MANAGEMENT_REPOSITORIES,
+    APPS,
     PALETTE_PATHS,
-    REPOSITORIES,
+    SLUGS,
     contrast_ratio,
     load_palette,
     load_palettes,
@@ -61,21 +60,16 @@ class PaletteTests(unittest.TestCase):
         self.assertEqual({"dark", "light"}, {palette["appearance"] for palette in palettes.values()})
 
     def test_every_child_carries_both_exact_palette_snapshots(self):
-        for repository in REPOSITORIES:
-            with self.subTest(repository=repository):
+        for slug in SLUGS:
+            with self.subTest(slug=slug):
                 self.assertEqual(
                     PALETTE_PATHS["dark"].read_bytes(),
-                    (ROOT / repository / "palette" / "apollo.json").read_bytes(),
+                    (ROOT / slug / "palette" / "apollo.json").read_bytes(),
                 )
                 self.assertEqual(
                     PALETTE_PATHS["light"].read_bytes(),
-                    (ROOT / repository / "palette" / "apollo-light.json").read_bytes(),
+                    (ROOT / slug / "palette" / "apollo-light.json").read_bytes(),
                 )
-
-    def test_website_carries_both_exact_palette_snapshots(self):
-        website = ROOT / "apollo-theme.github.io" / "palette"
-        self.assertEqual(PALETTE_PATHS["dark"].read_bytes(), (website / "apollo.json").read_bytes())
-        self.assertEqual(PALETTE_PATHS["light"].read_bytes(), (website / "apollo-light.json").read_bytes())
 
     def test_light_selection_and_cursor_text_roles_meet_contrast(self):
         light = load_palette("light")
@@ -128,51 +122,44 @@ class PaletteTests(unittest.TestCase):
         self.assertLess(contrast_ratio(colors["ansiBrightBlack"], colors["background"]), 4.5)
         self.assertIn(colors["ansiBrightBlack"], palette["constraints"]["restrictedColors"])
 
-    def test_every_repository_declares_a_light_artifact(self):
-        self.assertEqual(set(REPOSITORIES), set(LIGHT_ARTIFACTS))
-        self.assertTrue(all(path and not path.startswith("/") for path in LIGHT_ARTIFACTS.values()))
+    def test_every_app_declares_an_existing_light_artifact(self):
+        for slug in SLUGS:
+            with self.subTest(slug=slug):
+                artifact = APPS[slug]["light_artifact"]
+                self.assertTrue(artifact and not artifact.startswith("/"))
+                self.assertTrue((ROOT / slug / artifact).is_file())
 
-    def test_repository_names_follow_convention(self):
-        self.assertTrue(all(name.endswith("-apollo-theme") for name in REPOSITORIES))
-        self.assertEqual(13, len(REPOSITORIES))
-        self.assertEqual(len(REPOSITORIES), len(set(REPOSITORIES)))
-        self.assertEqual(set(REPOSITORIES), set(APP_METADATA))
-        self.assertEqual({"apollo-theme.github.io", ".github/organization"}, set(MANAGEMENT_REPOSITORIES))
+    def test_registry_shape(self):
+        self.assertEqual(17, len(SLUGS))
+        self.assertEqual(len(SLUGS), len(set(SLUGS)))
+        for slug in SLUGS:
+            with self.subTest(slug=slug):
+                self.assertRegex(slug, r"^[a-z0-9-]+$")
+                self.assertTrue((ROOT / slug).is_dir())
+                self.assertFalse(slug.endswith("-apollo-theme"))
+        for retired_name in ("REPOSITORIES", "APP_METADATA", "LIGHT_ARTIFACTS", "MANAGEMENT_REPOSITORIES"):
+            self.assertFalse(hasattr(common, retired_name), retired_name)
 
-    def test_retired_integrations_are_absent_from_public_surfaces(self):
-        retired = ("wezterm", "iterm2", "apple-terminal", "alacritty")
-        surfaces = (
-            ROOT / ".gitmodules",
-            ROOT / "README.md",
-            ROOT / ".github" / "organization" / "profile" / "README.md",
-            ROOT / "apollo-theme.github.io" / "index.html",
-            ROOT / "apollo-theme.github.io" / "README.md",
-        )
-        for slug in retired:
-            self.assertNotIn(f"{slug}-apollo-theme", REPOSITORIES)
-            self.assertFalse((ROOT / "apollo-theme.github.io" / "previews" / f"{slug}.svg").exists())
-            for surface in surfaces:
-                with self.subTest(slug=slug, surface=surface.name):
-                    self.assertNotIn(f"{slug}-apollo-theme", surface.read_text(encoding="utf-8"))
+    def test_retired_apps_are_present(self):
+        for slug in ("wezterm", "iterm2", "apple-terminal", "alacritty"):
+            with self.subTest(slug=slug):
+                self.assertIn(slug, SLUGS)
+                self.assertTrue((ROOT / slug).is_dir())
 
     def test_app_preview_slugs_are_stable_and_unique(self):
-        slugs = [metadata["slug"] for metadata in APP_METADATA.values()]
-        self.assertEqual(13, len(slugs))
+        slugs = list(APPS)
+        self.assertEqual(17, len(slugs))
         self.assertEqual(len(slugs), len(set(slugs)))
         self.assertTrue(all(slug and " " not in slug for slug in slugs))
 
-    def test_app_metadata_supports_readmes_and_repository_settings(self):
-        required = {"slug", "name", "family", "workflow", "platform", "badge_fragment", "install_anchor", "description", "topics"}
+    def test_app_metadata_supports_readmes(self):
+        required = {"name", "family", "platform", "badge_fragment", "install_anchor", "light_artifact"}
         families = {"terminal", "browser", "editor", "multiplexer", "shell", "utility"}
-        for repository, metadata in APP_METADATA.items():
-            with self.subTest(repository=repository):
+        for slug, metadata in APPS.items():
+            with self.subTest(slug=slug):
                 self.assertEqual(required, set(metadata))
                 self.assertIn(metadata["family"], families)
-                self.assertTrue(metadata["description"].startswith(f"{metadata['name']} Apollo Theme"))
-                self.assertIn(metadata["slug"].split("-")[0], " ".join(metadata["topics"]))
-                self.assertNotIn("gruvbox", metadata["topics"])
-                self.assertTrue(metadata["workflow"].endswith(".yml"))
-                readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+                readme = (ROOT / slug / "README.md").read_text(encoding="utf-8")
                 self.assertIn(f"img.shields.io/badge/{metadata['badge_fragment']}".lower(), readme.lower())
                 headings = (line.removeprefix("## ") for line in readme.splitlines() if line.startswith("## "))
                 self.assertIn(metadata["install_anchor"], {markdown_anchor(heading) for heading in headings})
@@ -463,24 +450,23 @@ Apollo Dark after unmatched close
         self.assertEqual(2, len(re.findall(r"(?<![\w-])Apollo Light(?![\w-])", prose)))
 
     def test_readme_contract_accepts_injected_visible_appearance_names(self):
-        repository = "eza-apollo-theme"
-        readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+        slug = "eza"
+        readme = (ROOT / slug / "README.md").read_text(encoding="utf-8")
         without_visible_names = readme.replace("Apollo Dark", "Dark appearance").replace(
             "Apollo Light", "Light appearance"
         )
         with self.assertRaisesRegex(ValueError, "visible appearance names.*Apollo Dark.*Apollo Light"):
-            check_readme_contract(repository, without_visible_names)
+            check_readme_contract(slug, without_visible_names)
         check_readme_contract(
-            repository,
+            slug,
             without_visible_names + "\n[**Apollo Dark**](#dark) and [**Apollo Light**](#light).\n",
         )
 
     def test_every_app_readme_presents_dark_and_light(self):
         failures = {}
-        for repository, metadata in APP_METADATA.items():
-            readme = (ROOT / repository / "README.md").read_text(encoding="utf-8")
+        for slug in APPS:
+            readme = (ROOT / slug / "README.md").read_text(encoding="utf-8")
             prose = visible_prose(readme)
-            slug = metadata["slug"]
             missing_names = [
                 name
                 for name in ("Apollo Dark", "Apollo Light")
@@ -498,7 +484,7 @@ Apollo Dark after unmatched close
                 if phrase in lowered
             ]
             if missing_names or missing_previews or stale_phrases:
-                failures[repository] = {
+                failures[slug] = {
                     "missing visible names": missing_names,
                     "missing previews": missing_previews,
                     "stale phrases": stale_phrases,
@@ -579,7 +565,7 @@ Apollo Dark after unmatched close
             if link not in parent
         ]
         missing_parent_integrations = [
-            repository for repository in REPOSITORIES if f"]({repository})" not in parent
+            slug for slug in SLUGS if f"]({slug})" not in parent
         ]
         if (
             missing_palette_rows
@@ -601,9 +587,9 @@ Apollo Dark after unmatched close
             if row not in profile
         ]
         missing_profile_repositories = [
-            repository
-            for repository in REPOSITORIES
-            if f"https://github.com/apollo-theme/{repository}" not in profile
+            slug
+            for slug in SLUGS
+            if f"https://github.com/apollo-theme/{slug}" not in profile
         ]
         if missing_profile_palette_rows or missing_profile_repositories:
             failures["profile details"] = {
@@ -631,27 +617,28 @@ Start SonicTerm after updating `~/.sonicterm/sonicterm.toml`.
 open -a SonicTerm
 ```
 """
-        self.assertEqual([], forbidden_identity_terms("sonicterm-apollo-theme", allowed))
+        self.assertEqual([], forbidden_identity_terms("sonicterm", allowed))
+        self.assertEqual([], forbidden_identity_terms("sonicterm", "SonicTerm Apollo Theme"))
         self.assertEqual(
             ["sonicterm"],
-            forbidden_identity_terms("sonicterm-apollo-theme", "SonicTerm lineage"),
+            forbidden_identity_terms("sonicterm", "SonicTerm lineage"),
         )
         self.assertEqual(
             ["sonicterm"],
             forbidden_identity_terms(
-                "sonicterm-apollo-theme",
+                "sonicterm",
                 "SonicTerm has the upstream palette that inspired Apollo.",
             ),
         )
         self.assertEqual(
             ["sonicterm"],
-            forbidden_identity_terms("vim-apollo-theme", "SonicTerm theme"),
+            forbidden_identity_terms("vim", "SonicTerm theme"),
         )
 
     def test_package_metadata_uses_apollo_only_identity(self):
-        for repository in REPOSITORIES:
-            with self.subTest(repository=repository):
-                public_metadata = public_identity_metadata(ROOT / repository).lower()
+        for slug in SLUGS:
+            with self.subTest(slug=slug):
+                public_metadata = public_identity_metadata(ROOT / slug).lower()
                 self.assertNotIn("gruvbox", public_metadata)
                 self.assertNotIn("base16", public_metadata)
                 self.assertNotIn("sonicterm-modified", public_metadata)

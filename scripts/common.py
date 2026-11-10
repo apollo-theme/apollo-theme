@@ -13,44 +13,29 @@ PALETTE_PATHS = {
 PALETTE_PATH = PALETTE_PATHS["dark"]
 HEX_COLOR = re.compile(r"^#[0-9a-f]{6}$")
 
-LIGHT_ARTIFACTS = {
-    "sonicterm-apollo-theme": "apollo-light.toml",
-    "windows-terminal-apollo-theme": "apollo-light.json",
-    "firefox-apollo-theme": "variants/light/manifest.json",
-    "vscode-apollo-theme": "themes/apollo-light-color-theme.json",
-    "visual-studio-apollo-theme": "themes/Apollo Light.vstheme",
-    "vim-apollo-theme": "colors/apollo-light.vim",
-    "nvim-apollo-theme": "colors/apollo-light.lua",
-    "xcode-apollo-theme": "Apollo Light.xccolortheme",
-    "tmux-apollo-theme": "apollo-light.tmux",
-    "rmux-apollo-theme": "apollo-rmux-light.conf",
-    "powershell-apollo-theme": "ApolloTheme.psm1",
-    "bat-apollo-theme": "Apollo Light.tmTheme",
-    "eza-apollo-theme": "light/theme.yml",
+APPS = {
+    "sonicterm": {"name": "SonicTerm", "family": "terminal", "platform": "Cross-platform", "badge_fragment": "target-SonicTerm%20%C2%B7%20cross--platform-", "install_anchor": "install", "light_artifact": "apollo-light.toml"},
+    "windows-terminal": {"name": "Windows Terminal", "family": "terminal", "platform": "Windows", "badge_fragment": "target-Windows%20Terminal%20%C2%B7%20Windows-", "install_anchor": "install", "light_artifact": "apollo-light.json"},
+    "firefox": {"name": "Firefox", "family": "browser", "platform": "Browser", "badge_fragment": "Target-Firefox-", "install_anchor": "install-sign-and-uninstall", "light_artifact": "variants/light/manifest.json"},
+    "vscode": {"name": "Visual Studio Code", "family": "editor", "platform": "Cross-platform", "badge_fragment": "target-Visual%20Studio%20Code-", "install_anchor": "install", "light_artifact": "themes/apollo-light-color-theme.json"},
+    "visual-studio": {"name": "Visual Studio", "family": "editor", "platform": "Windows", "badge_fragment": "target-Visual%20Studio%202022%2B-", "install_anchor": "install", "light_artifact": "themes/Apollo Light.vstheme"},
+    "vim": {"name": "Vim", "family": "editor", "platform": "Cross-platform", "badge_fragment": "target-Vim-", "install_anchor": "install", "light_artifact": "colors/apollo-light.vim"},
+    "nvim": {"name": "Neovim", "family": "editor", "platform": "Cross-platform", "badge_fragment": "target-Neovim-", "install_anchor": "install", "light_artifact": "colors/apollo-light.lua"},
+    "xcode": {"name": "Xcode", "family": "editor", "platform": "macOS", "badge_fragment": "target-Xcode%2026-", "install_anchor": "install-and-activate", "light_artifact": "Apollo Light.xccolortheme"},
+    "tmux": {"name": "tmux", "family": "multiplexer", "platform": "Terminal", "badge_fragment": "Target-tmux-", "install_anchor": "install", "light_artifact": "apollo-light.tmux"},
+    "rmux": {"name": "RMUX", "family": "multiplexer", "platform": "Terminal", "badge_fragment": "Target-RMUX-", "install_anchor": "install", "light_artifact": "apollo-rmux-light.conf"},
+    "powershell": {"name": "PowerShell", "family": "shell", "platform": "Cross-platform", "badge_fragment": "PowerShell-7.2%2B-", "install_anchor": "install", "light_artifact": "ApolloTheme.psm1"},
+    "bat": {"name": "bat", "family": "utility", "platform": "CLI", "badge_fragment": "app-bat-", "install_anchor": "install", "light_artifact": "Apollo Light.tmTheme"},
+    "eza": {"name": "eza", "family": "utility", "platform": "CLI", "badge_fragment": "eza-0.23.5%2B-", "install_anchor": "install", "light_artifact": "light/theme.yml"},
+    "wezterm": {"name": "WezTerm", "family": "terminal", "platform": "Cross-platform", "badge_fragment": "target-WezTerm%20%C2%B7%20cross--platform-", "install_anchor": "install", "light_artifact": "apollo-light.toml"},
+    "iterm2": {"name": "iTerm2", "family": "terminal", "platform": "macOS", "badge_fragment": "target-iTerm2%20%C2%B7%20macOS-", "install_anchor": "install", "light_artifact": "Apollo Light.itermcolors"},
+    "apple-terminal": {"name": "Apple Terminal", "family": "terminal", "platform": "macOS", "badge_fragment": "target-Apple%20Terminal%20%C2%B7%20macOS-", "install_anchor": "install", "light_artifact": "Apollo Light.terminal"},
+    "alacritty": {"name": "Alacritty", "family": "terminal", "platform": "Cross-platform", "badge_fragment": "target-Alacritty%20%C2%B7%20cross--platform-", "install_anchor": "install", "light_artifact": "apollo-light.toml"},
 }
 
-APP_METADATA = {
-    "sonicterm-apollo-theme": {"slug": "sonicterm", "name": "SonicTerm", "family": "terminal", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-SonicTerm%20%C2%B7%20cross--platform-", "install_anchor": "install", "description": "SonicTerm Apollo Theme — dark and light.", "topics": ("sonicterm", "terminal-emulator", "terminal-theme")},
-    "windows-terminal-apollo-theme": {"slug": "windows-terminal", "name": "Windows Terminal", "family": "terminal", "workflow": "ci.yml", "platform": "Windows", "badge_fragment": "target-Windows%20Terminal%20%C2%B7%20Windows-", "install_anchor": "install", "description": "Windows Terminal Apollo Theme — dark and light.", "topics": ("windows-terminal", "windows", "terminal-theme")},
-    "firefox-apollo-theme": {"slug": "firefox", "name": "Firefox", "family": "browser", "workflow": "ci.yml", "platform": "Browser", "badge_fragment": "Target-Firefox-", "install_anchor": "install-sign-and-uninstall", "description": "Firefox Apollo Theme — dark and light packages.", "topics": ("firefox", "firefox-theme", "browser-theme", "webextension")},
-    "vscode-apollo-theme": {"slug": "vscode", "name": "Visual Studio Code", "family": "editor", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-Visual%20Studio%20Code-", "install_anchor": "install", "description": "Visual Studio Code Apollo Theme — dark and light.", "topics": ("vscode", "visual-studio-code", "editor-theme")},
-    "visual-studio-apollo-theme": {"slug": "visual-studio", "name": "Visual Studio", "family": "editor", "workflow": "ci.yml", "platform": "Windows", "badge_fragment": "target-Visual%20Studio%202022%2B-", "install_anchor": "install", "description": "Visual Studio Apollo Theme — dark and light.", "topics": ("visual-studio", "windows", "ide-theme")},
-    "vim-apollo-theme": {"slug": "vim", "name": "Vim", "family": "editor", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-Vim-", "install_anchor": "install", "description": "Vim Apollo Theme — dark and light.", "topics": ("vim", "vim-colorscheme", "editor-theme")},
-    "nvim-apollo-theme": {"slug": "nvim", "name": "Neovim", "family": "editor", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-Neovim-", "install_anchor": "install", "description": "Neovim Apollo Theme — dark and light.", "topics": ("neovim", "nvim-colorscheme", "editor-theme")},
-    "xcode-apollo-theme": {"slug": "xcode", "name": "Xcode", "family": "editor", "workflow": "check.yml", "platform": "macOS", "badge_fragment": "target-Xcode%2026-", "install_anchor": "install-and-activate", "description": "Xcode Apollo Theme — dark and light.", "topics": ("xcode", "macos", "ide-theme")},
-    "tmux-apollo-theme": {"slug": "tmux", "name": "tmux", "family": "multiplexer", "workflow": "ci.yml", "platform": "Terminal", "badge_fragment": "Target-tmux-", "install_anchor": "install", "description": "tmux Apollo Theme — dark and light.", "topics": ("tmux", "terminal-multiplexer", "tmux-theme")},
-    "rmux-apollo-theme": {"slug": "rmux", "name": "RMUX", "family": "multiplexer", "workflow": "ci.yml", "platform": "Terminal", "badge_fragment": "Target-RMUX-", "install_anchor": "install", "description": "RMUX Apollo Theme — dark and light.", "topics": ("rmux", "terminal-multiplexer", "terminal-theme")},
-    "powershell-apollo-theme": {"slug": "powershell", "name": "PowerShell", "family": "shell", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "PowerShell-7.2%2B-", "install_anchor": "install", "description": "PowerShell Apollo Theme for PSReadLine — dark and light.", "topics": ("powershell", "psreadline", "shell-theme")},
-    "bat-apollo-theme": {"slug": "bat", "name": "bat", "family": "utility", "workflow": "ci.yml", "platform": "CLI", "badge_fragment": "app-bat-", "install_anchor": "install", "description": "bat Apollo Theme — dark and light.", "topics": ("bat", "syntax-highlighting", "cli-theme")},
-    "eza-apollo-theme": {"slug": "eza", "name": "eza", "family": "utility", "workflow": "ci.yml", "platform": "CLI", "badge_fragment": "eza-0.23.5%2B-", "install_anchor": "install", "description": "eza Apollo Theme — dark and light.", "topics": ("eza", "ls", "cli-theme")},
-}
-
-REPOSITORIES = tuple(APP_METADATA)
-
-MANAGEMENT_REPOSITORIES = {
-    "apollo-theme.github.io": "https://github.com/apollo-theme/apollo-theme.github.io.git",
-    ".github/organization": "https://github.com/apollo-theme/.github.git",
-}
+SLUGS = tuple(APPS)
+CLONE_APPS = ("vim", "nvim", "tmux", "rmux", "powershell", "bat", "eza")
+MONOREPO = "https://github.com/apollo-theme/apollo-theme"
 
 FORBIDDEN_LINEAGE_PHRASES = (
     "gruvbox",
@@ -64,6 +49,16 @@ FORBIDDEN_LINEAGE_PHRASES = (
 def markdown_anchor(heading: str) -> str:
     normalized = re.sub(r"[^\w\s-]", "", heading.lower())
     return re.sub(r"\s+", "-", normalized.strip())
+
+
+def readme_blocks(text: str, marker: str) -> list[str]:
+    """Return the body of each fenced code block that directly follows ``<!-- smoke:<marker> -->``."""
+    pattern = re.compile(
+        rf"<!--\s*smoke:{re.escape(marker)}\s*-->[ \t]*\n(?:[ \t]*\n)*"
+        r"[ \t]*(?P<fence>`{3,}|~{3,})[^\n]*\n(?P<body>.*?)^[ \t]*(?P=fence)[ \t]*$",
+        re.MULTILINE | re.DOTALL,
+    )
+    return [match.group("body") for match in pattern.finditer(text)]
 
 
 def palette_path(variant: str | Path = "dark") -> Path:
