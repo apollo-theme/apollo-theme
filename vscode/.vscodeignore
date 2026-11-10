@@ -1,0 +1,8 @@
+.github/**
+.gitignore
+CLAUDE.md
+scripts/**
+tests/**
+palette/**
+dist/**
+**/__pycache__/**

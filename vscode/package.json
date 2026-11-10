@@ -1,0 +1,54 @@
+{
+  "name": "apollo-theme",
+  "displayName": "Apollo Theme",
+  "description": "High-contrast warm dark and light themes built from the canonical Apollo palettes.",
+  "version": "0.2.0",
+  "publisher": "apollo-theme",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://github.com/apollo-theme/vscode-apollo-theme#readme",
+  "bugs": {
+    "url": "https://github.com/apollo-theme/vscode-apollo-theme/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apollo-theme/vscode-apollo-theme.git"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "apollo",
+    "dark",
+    "light",
+    "high-contrast",
+    "theme"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Apollo",
+        "uiTheme": "vs-dark",
+        "path": "./themes/apollo-color-theme.json"
+      },
+      {
+        "label": "Apollo Light",
+        "uiTheme": "vs",
+        "path": "./themes/apollo-light-color-theme.json"
+      }
+    ]
+  },
+  "scripts": {
+    "generate": "python3 scripts/generate.py",
+    "check": "python3 scripts/generate.py --check && python3 scripts/check.py",
+    "test": "python3 -m unittest discover -s tests -v",
+    "package": "node -e \"require('fs').mkdirSync('dist', { recursive: true })\" && npm run check && npm test && vsce package --out dist/apollo-theme.vsix",
+    "prepublishOnly": "npm run check && npm test"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "3.9.2"
+  }
+}

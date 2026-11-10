@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.vsix
+__pycache__/
+*.py[cod]
+.DS_Store
+.vscode-test/
