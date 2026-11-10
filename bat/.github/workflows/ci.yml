@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install bat 0.26.1
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xz
+          echo "$PWD/bat-v0.26.1-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+      - name: Verify generated theme
+        run: python3 scripts/generate.py --check
+      - name: Check plist and isolated bat cache
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
