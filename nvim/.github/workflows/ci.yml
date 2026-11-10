@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          version: v0.12.0
+          neovim: true
+      - name: Check generated theme and tests
+        run: python3 scripts/check.py
