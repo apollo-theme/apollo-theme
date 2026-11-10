@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""Verify that every app folder still matches the repository it was migrated from.
+
+Fail-closed: every subprocess error, missing bundle/backup file, or missing release is
+reported as an error string; nothing is skipped.
+"""
+from __future__ import annotations
+
+import argparse
+import fnmatch
+import hashlib
+import json
+import subprocess
+import sys
+import urllib.request
+from pathlib import Path
+
+from common import ROOT, SLUGS
+from migration import MigrationError, Source, repo_name, source_for
+
+ORG = "apollo-theme"
+
+
+def _default_build_dir(name: str) -> Path:
+    for candidate in (ROOT / ".build" / name, ROOT.parent / name):
+        if candidate.exists():
+            return candidate
+    return ROOT / ".build" / name
+
+
+DEFAULT_BACKUP = _default_build_dir("org-backup-2026-11-09")
+DEFAULT_RETIRED = _default_build_dir("apollo-light-crlf-audit")
+
+
+def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
+
+
+def _failure(slug: str, result: subprocess.CompletedProcess, args: tuple) -> str:
+    return f"{slug}: git {' '.join(args)} failed: {result.stderr.strip() or result.returncode}"
+
+
+# Offline checks -----------------------------------------------------------
+
+
+def check_tree(root: Path, source: Source) -> list[str]:
+    args = ("diff", "--name-only", f"{source.rev}^{{tree}}", f"HEAD:{source.slug}")
+    result = _git(root, *args)
+    if result.returncode != 0:
+        return [_failure(source.slug, result, args)]
+    return [
+        f"{source.slug}: {path} differs from source"
+        for path in result.stdout.splitlines()
+        if path and not any(fnmatch.fnmatch(path, pattern) for pattern in source.allow)
+    ]
+
+
+def check_history(root: Path, source: Source) -> list[str]:
+    args = ("merge-base", "--is-ancestor", source.rev, "HEAD")
+    result = _git(root, *args)
+    if result.returncode == 0:
+        return []
+    if result.returncode == 1:
+        return [f"{source.slug}: source {source.rev} is not an ancestor of HEAD"]
+    return [_failure(source.slug, result, args)]
+
+
+def check_tags(root: Path | None, source: Source, remote_tags: dict | None = None) -> list[str]:
+    """Compare tag commits. Offline reads ``<slug>-<tag>^{commit}``; online uses peeled ls-remote refs."""
+    errors = []
+    for tag, expected in sorted(source.tags.items()):
+        name = f"{source.slug}-{tag}"
+        if remote_tags is None:
+            result = _git(root, "rev-parse", "--verify", "-q", f"refs/tags/{name}^{{commit}}")
+            actual = result.stdout.strip() if result.returncode == 0 else None
+        else:
+            actual = remote_tags.get(f"refs/tags/{name}")
+        if actual is None:
+            errors.append(f"{source.slug}: tag {name} missing")
+        elif actual != expected:
+            errors.append(f"{source.slug}: tag {name} not on {expected}")
+    return errors
+
+
+# Online checks ------------------------------------------------------------
+
+
+def run_ls_remote(*args: str) -> str:
+    return subprocess.run(["git", "ls-remote", *args], cwd=ROOT, check=True, capture_output=True, text=True).stdout
+
+
+def gh_api(path: str):
+    """GET a GitHub API path; paginated list endpoints are flattened into one list."""
+    output = subprocess.run(
+        ["gh", "api", "--paginate", "--slurp", path], check=True, capture_output=True, text=True
+    ).stdout
+    pages = json.loads(output)
+    if all(isinstance(page, list) for page in pages):
+        return [item for page in pages for item in page]
+    return pages[0] if len(pages) == 1 else pages
+
+
+def gh_raw(path: str) -> bytes:
+    return subprocess.run(
+        ["gh", "api", path, "-H", "Accept: application/vnd.github.raw"], check=True, capture_output=True
+    ).stdout
+
+
+def download_asset(asset: dict) -> bytes:
+    url = asset.get("browser_download_url") or asset["url"]
+    with urllib.request.urlopen(url, timeout=60) as response:  # noqa: S310 - fixed GitHub release URL
+        return response.read()
+
+
+def parse_ls_remote(text: str, peel: bool = False) -> dict[str, str]:
+    """Map ref -> sha. With ``peel``, an annotated tag's ``^{}`` line wins; otherwise ``^{}`` lines are dropped."""
+    refs: dict[str, str] = {}
+    peeled: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        sha, ref = line.split("\t", 1)
+        if ref.endswith("^{}"):
+            peeled[ref[:-3]] = sha
+        else:
+            refs[ref] = sha
+    if peel:
+        refs.update(peeled)
+    return refs
+
+
+def check_pushed(root: Path, ls_remote=run_ls_remote) -> list[str]:
+    try:
+        remote = parse_ls_remote(ls_remote("origin", "refs/heads/main")).get("refs/heads/main")
+    except (subprocess.CalledProcessError, OSError) as error:
+        return [f"origin/main: ls-remote failed: {error}"]
+    head = _git(root, "rev-parse", "HEAD")
+    if head.returncode != 0:
+        return [f"HEAD: rev-parse failed: {head.stderr.strip()}"]
+    return [] if remote == head.stdout.strip() else ["origin/main is not HEAD"]
+
+
+def check_pin(root: Path, fetch_raw=gh_raw) -> list[str]:
+    try:
+        pin = json.loads((Path(root) / "palette" / "SOURCE.json").read_text(encoding="utf-8"))
+        commit, digests = pin["commit"], pin["sha256"]
+    except (OSError, ValueError, KeyError) as error:
+        return [f"palette/SOURCE.json unreadable: {error}"]
+    errors = []
+    for name, expected in sorted(digests.items()):
+        try:
+            data = fetch_raw(f"repos/{ORG}/apollo-palette/contents/palette/{name}?ref={commit}")
+        except (subprocess.CalledProcessError, OSError) as error:
+            errors.append(f"palette/{name}: fetch at {commit} failed: {error}")
+            continue
+        if hashlib.sha256(data).hexdigest() != expected:
+            errors.append(f"palette/{name}: apollo-palette@{commit} does not match SOURCE.json")
+    return errors
+
+
+def normalize(release: dict, download=None) -> dict:
+    """Comparable view of a release from either ``gh release view`` JSON or the REST API."""
+    assets = []
+    for asset in release.get("assets", []):
+        digest = asset.get("digest")
+        if digest:
+            sha256 = digest.removeprefix("sha256:")
+        elif download is not None:
+            sha256 = hashlib.sha256(download(asset)).hexdigest()
+        else:
+            raise ValueError(f"asset {asset.get('name')} has no digest and no downloader")
+        assets.append((asset["name"], asset["size"], sha256))
+    body = (release.get("body") or "").replace("\r\n", "\n").rstrip()
+    return {
+        "tag": release["tagName"] if "tagName" in release else release["tag_name"],
+        "name": release.get("name") or "",
+        "body": body,
+        "assets": sorted(assets),
+    }
+
+
+def _bundle_path(backup: Path, repo: str) -> Path:
+    return Path(backup) / ("dot-github.bundle" if repo == ".github" else f"{repo}.bundle")
+
+
+def _local_asset(directory: Path):
+    def read(asset: dict) -> bytes:
+        return (directory / asset["name"]).read_bytes()
+    return read
+
+
+def check_live_source(repo: str, backup: Path, ls_remote=run_ls_remote, api=gh_api, download=download_asset) -> list[str]:
+    """The live org repository still matches its backup bundle and release JSON."""
+    backup = Path(backup)
+    bundle = _bundle_path(backup, repo)
+    if not bundle.is_file():
+        return [f"{repo}: missing bundle {bundle}"]
+    releases_dir = backup / "releases" / repo
+    if not releases_dir.is_dir():
+        return [f"{repo}: missing release backup {releases_dir}"]
+    try:
+        heads = subprocess.run(
+            ["git", "bundle", "list-heads", str(bundle)], check=True, capture_output=True, text=True
+        ).stdout
+        expected_refs = {
+            ref: sha
+            for sha, ref in (line.split(" ", 1) for line in heads.splitlines() if line.strip())
+            if ref.startswith(("refs/heads/", "refs/tags/"))
+        }
+        live_refs = parse_ls_remote(ls_remote("--heads", "--tags", f"https://github.com/{ORG}/{repo}"))
+        live_releases = api(f"repos/{ORG}/{repo}/releases")
+        expected = {
+            path.stem: normalize(json.loads(path.read_text(encoding="utf-8")), _local_asset(releases_dir / path.stem))
+            for path in sorted(releases_dir.glob("*.json"))
+        }
+        live = {}
+        for release in live_releases:
+            view = normalize(release, download)
+            live[view["tag"]] = view
+    except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
+        return [f"{repo}: {type(error).__name__}: {error}"]
+
+    errors = []
+    if live_refs != expected_refs:
+        errors.append(f"{repo}: refs differ from bundle")
+    for tag in sorted(expected):
+        if tag not in live:
+            errors.append(f"{repo}: release {tag} missing")
+        elif live[tag] != expected[tag]:
+            errors.append(f"{repo}: release {tag} differs from backup")
+    for tag in sorted(set(live) - set(expected)):
+        errors.append(f"{repo}: release {tag} not in backup")
+    return errors
+
+
+# CLI ----------------------------------------------------------------------
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Verify the consolidated app folders against their source repositories")
+    parser.add_argument("--app", choices=SLUGS, help="verify one app folder only")
+    parser.add_argument("--offline", action="store_true", help="skip every network check")
+    parser.add_argument("--backup", type=Path, default=DEFAULT_BACKUP, help="org backup directory with bundles and releases")
+    parser.add_argument("--retired", type=Path, default=DEFAULT_RETIRED, help="directory of retired <slug>-apollo-theme clones")
+    parser.add_argument("--live-source", metavar="REPO", help="check a live org repository against its backup (online)")
+    args = parser.parse_args(argv)
+    if args.offline and args.live_source:
+        parser.error("--live-source needs network access; drop --offline")
+
+    errors: list[str] = []
+    slugs = [args.app] if args.app else ([] if args.live_source else list(SLUGS))
+    remote_tags = None
+    if slugs and not args.offline:
+        try:
+            remote_tags = parse_ls_remote(run_ls_remote("--tags", "origin"), peel=True)
+        except (subprocess.CalledProcessError, OSError) as error:
+            errors.append(f"origin: ls-remote --tags failed: {error}")
+            remote_tags = {}
+    for slug in slugs:
+        try:
+            source = source_for(slug, args.backup, args.retired)
+        except MigrationError as error:
+            errors.append(f"{slug}: {error}")
+            continue
+        errors += check_tree(ROOT, source)
+        errors += check_history(ROOT, source)
+        errors += check_tags(ROOT, source, remote_tags=remote_tags)
+    if slugs and not args.offline:
+        errors += check_pushed(ROOT)
+        errors += check_pin(ROOT)
+    if args.live_source:
+        errors += check_live_source(args.live_source, args.backup)
+
+    for error in errors:
+        print(error)
+    if errors:
+        return 1
+    if slugs:
+        print(f"verified {len(slugs)} apps")
+    if args.live_source:
+        print(f"verified live source {args.live_source}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
