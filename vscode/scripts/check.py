@@ -258,7 +258,7 @@ def main() -> int:
 
     if package.get("publisher") != "apollo-theme":
         fail("publisher must remain 'apollo-theme'")
-    if package.get("repository", {}).get("url") != "https://github.com/apollo-theme/vscode-apollo-theme.git":
+    if package.get("repository", {}).get("url") != "https://github.com/apollo-theme/apollo-theme.git":
         fail("package repository URL is incorrect")
     expected_contributions = [
         {"label": "Apollo", "uiTheme": "vs-dark", "path": "./themes/apollo-color-theme.json"},

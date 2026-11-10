@@ -20,10 +20,357 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: python scripts/generate.py --check
       - run: python scripts/check.py
       - run: python -m unittest discover -s tests -v
+
+  smoke:
+    name: Smoke install (macOS)
+    runs-on: macos-15
+    env:
+      APOLLO_SMOKE_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install smoke-test applications
+        run: brew install vim neovim tmux rmux bat eza && brew install --cask powershell
+      - run: python3 -m unittest tests.test_smoke_install -v
+
+  sonicterm:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sonicterm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check generated artifact
+        run: python3 scripts/generate.py --check
+      - name: Validate theme
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  windows-terminal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: windows-terminal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check generated artifact
+        run: python3 scripts/generate.py --check
+      - name: Validate theme
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  firefox:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firefox
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: firefox/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run lint
+      - name: Dry-run release and build package
+        run: python3 ../scripts/firefox_release.py --dry-run "firefox-v$(node -p "require('./package.json').version")"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apollo-themes
+          path: |
+            firefox/web-ext-artifacts/apollo-theme.zip
+            firefox/web-ext-artifacts/apollo-light-theme.zip
+          if-no-files-found: error
+
+  vscode:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: vscode/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apollo-theme-vsix
+          path: vscode/dist/apollo-theme.vsix
+
+  visual-studio:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: visual-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install --yes libxml2-utils
+      - run: python3 scripts/generate.py --check
+      - run: python3 scripts/check.py
+      - run: python3 -m unittest discover -s tests -v
+      - run: xmllint --noout --schema schemas/vstheme.xsd themes/Apollo.vstheme "themes/Apollo Light.vstheme"
+
+  visual-studio-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: visual-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/generate.py --check
+      - run: python scripts/check.py
+      - run: python -m unittest discover -s tests -v
+      - name: Validate native Visual Studio theme XML
+        shell: pwsh
+        run: ./scripts/validate.ps1
+      - name: Stage importable theme artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts
+          Copy-Item themes/Apollo.vstheme artifacts/Apollo.vstheme
+          Copy-Item "themes/Apollo Light.vstheme" "artifacts/Apollo Light.vstheme"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Apollo-vsthemes
+          path: visual-studio/artifacts/*.vstheme
+
+  vim:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          version: v9.1.0000
+      - name: Check generated theme and tests
+        run: python3 scripts/check.py
+
+  nvim:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nvim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          version: v0.12.0
+          neovim: true
+      - name: Check generated theme and tests
+        run: python3 scripts/check.py
+
+  xcode:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: xcode
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate theme
+        run: python3 scripts/check.py
+
+  tmux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tmux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+      - name: Verify generated theme
+        run: python3 scripts/generate.py --check
+      - name: Check native options
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  rmux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rmux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install tmux-compatible validator
+        run: sudo apt-get update && sudo apt-get install -y tmux
+      - name: Verify generated theme
+        run: python3 scripts/generate.py --check
+      - name: Check compatible native options
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  powershell:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: powershell
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify generated module
+        shell: pwsh
+        run: python scripts/generate.py --check
+      - name: Run checker
+        shell: pwsh
+        run: python scripts/check.py
+      - name: Run Python tests
+        shell: pwsh
+        run: python -m unittest discover -s tests -v
+      - name: Run direct PowerShell assertions
+        shell: pwsh
+        run: ./tests/Test-ApolloTheme.ps1
+
+  bat:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install bat 0.26.1
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xz
+          echo "$PWD/bat-v0.26.1-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+      - name: Verify generated theme
+        run: python3 scripts/generate.py --check
+      - name: Check plist and isolated bat cache
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  eza:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: eza
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install eza 0.23.5
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/eza-community/eza/releases/download/v0.23.5/eza_x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xz
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 eza "$HOME/.local/bin/eza"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Verify generated theme
+        run: python3 scripts/generate.py --check
+      - name: Check isolated eza schema and precedence
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  wezterm:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wezterm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check generated artifact
+        run: python3 scripts/generate.py --check
+      - name: Validate theme
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  iterm2:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: iterm2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate theme
+        run: python3 scripts/check.py
+
+  apple-terminal:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: apple-terminal
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate theme
+        run: python3 scripts/check.py
+
+  alacritty:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alacritty
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check generated artifact
+        run: python3 scripts/generate.py --check
+      - name: Validate theme
+        run: python3 scripts/check.py
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v

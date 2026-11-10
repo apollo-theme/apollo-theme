@@ -6,13 +6,14 @@
   "publisher": "apollo-theme",
   "license": "MIT",
   "private": true,
-  "homepage": "https://github.com/apollo-theme/vscode-apollo-theme#readme",
+  "homepage": "https://github.com/apollo-theme/apollo-theme/tree/main/vscode",
   "bugs": {
-    "url": "https://github.com/apollo-theme/vscode-apollo-theme/issues"
+    "url": "https://github.com/apollo-theme/apollo-theme/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apollo-theme/vscode-apollo-theme.git"
+    "url": "https://github.com/apollo-theme/apollo-theme.git",
+    "directory": "vscode"
   },
   "engines": {
     "vscode": "^1.95.0"
@@ -45,7 +46,7 @@
     "generate": "python3 scripts/generate.py",
     "check": "python3 scripts/generate.py --check && python3 scripts/check.py",
     "test": "python3 -m unittest discover -s tests -v",
-    "package": "node -e \"require('fs').mkdirSync('dist', { recursive: true })\" && npm run check && npm test && vsce package --out dist/apollo-theme.vsix",
+    "package": "node -e \"require('fs').mkdirSync('dist', { recursive: true })\" && npm run check && npm test && vsce package --out dist/apollo-theme.vsix --baseContentUrl https://github.com/apollo-theme/apollo-theme/blob/main/vscode --baseImagesUrl https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/vscode",
     "prepublishOnly": "npm run check && npm test"
   },
   "devDependencies": {

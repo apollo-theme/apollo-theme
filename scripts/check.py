@@ -155,6 +155,8 @@ def check_layout() -> None:
     for slug in SLUGS:
         if not (ROOT / slug).is_dir() or (ROOT / slug / ".git").exists():
             raise ValueError(f"{slug}: must be a plain tracked folder")
+        if (ROOT / slug / ".github").exists():
+            raise ValueError(f"{slug}: nested .github is not allowed")
 
 
 def check_source_pin(root: Path = ROOT) -> None:
