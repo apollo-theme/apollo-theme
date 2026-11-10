@@ -19,8 +19,8 @@ THEME_PATHS = {
 }
 RESTRICTED_DARK = "#665c54"
 README_CONTRACT_MARKERS = {
-    "dark source command": 'rmux source-file "$HOME/.config/rmux-apollo-theme/apollo-rmux.conf"',
-    "light source command": 'rmux source-file "$HOME/.config/rmux-apollo-theme/apollo-rmux-light.conf"',
+    "dark source command": 'rmux source-file "$HOME/.config/apollo-theme/rmux/apollo-rmux.conf"',
+    "light source command": 'rmux source-file "$HOME/.config/apollo-theme/rmux/apollo-rmux-light.conf"',
     "dark status output": "bg=#141617,fg=#cfbc97",
     "light status output": "bg=#f9f5d7,fg=#3c3836",
 }
