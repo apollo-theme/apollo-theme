@@ -502,11 +502,7 @@ Apollo Dark after unmatched close
             self.fail(f"child README contracts failed:\n{details}")
 
     def test_authoritative_readmes_present_the_dark_light_contract(self):
-        surfaces = {
-            "parent": ROOT / "README.md",
-            "pages": ROOT / "apollo-theme.github.io" / "README.md",
-            "profile": ROOT / ".github" / "organization" / "profile" / "README.md",
-        }
+        surfaces = {"parent": ROOT / "README.md"}
         stale_phrases = (
             "coming soon",
             "will appear",
@@ -514,6 +510,7 @@ Apollo Dark after unmatched close
             "viewport pass pending",
             "17 previews verified",
             "34 previews verified",
+            "submodule",
         )
         readmes = {name: path.read_text(encoding="utf-8") for name, path in surfaces.items()}
 
@@ -564,37 +561,39 @@ Apollo Dark after unmatched close
             )
             if link not in parent
         ]
-        missing_parent_integrations = [
-            slug for slug in SLUGS if f"]({slug})" not in parent
+        missing_folder_links = [
+            slug
+            for slug in SLUGS
+            if f"https://github.com/apollo-theme/apollo-theme/tree/main/{slug})" not in parent
         ]
+        missing_app_previews = [
+            preview
+            for slug in SLUGS
+            for preview in (f"previews/{slug}.svg", f"previews/{slug}-light.svg")
+            if preview not in parent
+        ]
+        missing_palette_repository = "https://github.com/apollo-theme/apollo-palette" not in parent
+        retired_repository_urls = sorted(
+            set(re.findall(r"github\.com/apollo-theme/[\w.-]+-apollo-theme\b", parent))
+            | set(re.findall(r"\]\(\.?/?[\w-]+-apollo-theme/?\)", parent))
+        )
         if (
             missing_palette_rows
             or compatibility_sentence not in parent
             or missing_preview_links
-            or missing_parent_integrations
+            or missing_folder_links
+            or missing_app_previews
+            or missing_palette_repository
+            or retired_repository_urls
         ):
             failures["parent details"] = {
                 "missing palette rows": missing_palette_rows,
                 "missing exact compatibility sentence": compatibility_sentence not in parent,
                 "missing preview links": missing_preview_links,
-                "missing integrations": missing_parent_integrations,
-            }
-
-        profile = readmes["profile"]
-        missing_profile_palette_rows = [
-            row
-            for row in ("| **Apollo Dark** |", "| **Apollo Light** |")
-            if row not in profile
-        ]
-        missing_profile_repositories = [
-            slug
-            for slug in SLUGS
-            if f"https://github.com/apollo-theme/{slug}" not in profile
-        ]
-        if missing_profile_palette_rows or missing_profile_repositories:
-            failures["profile details"] = {
-                "missing palette rows": missing_profile_palette_rows,
-                "missing repository links": missing_profile_repositories,
+                "missing folder links": missing_folder_links,
+                "missing app previews": missing_app_previews,
+                "missing apollo-palette link": missing_palette_repository,
+                "retired repository urls": retired_repository_urls,
             }
 
         if failures:
