@@ -332,7 +332,7 @@ def export_metadata(runner, backup: Path, repo: str) -> dict:
         if not target.is_file() or target.read_bytes() != data:
             atomic_write(target, data)
     for stale in sorted(directory.rglob("*"), reverse=True):
-        relative = str(stale.relative_to(directory))
+        relative = stale.relative_to(directory).as_posix()
         if stale.is_file() and relative != "manifest.json" and relative not in files:
             stale.unlink()
         elif stale.is_dir() and not any(stale.iterdir()):
@@ -352,7 +352,7 @@ def verify_metadata(directory: Path, manifest: dict) -> None:
         raise AbortError(f"metadata: {directory} manifest unreadable: {error}") from error
     if on_disk != manifest:
         raise AbortError(f"metadata: {directory} manifest differs after write")
-    present = {str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()} - {"manifest.json"}
+    present = {p.relative_to(directory).as_posix() for p in directory.rglob("*") if p.is_file()} - {"manifest.json"}
     if present != set(manifest["files"]):
         raise AbortError(f"metadata: {directory} files differ from manifest")
     for name, digest in manifest["files"].items():

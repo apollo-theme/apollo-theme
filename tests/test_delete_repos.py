@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -584,6 +584,18 @@ class MetadataTests(Base):
         export_metadata(fake, self.backup, ".github")
         second = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         self.assertEqual(first, second)
+
+    def test_manifest_paths_ignore_platform_separator(self):
+        # On Windows str(relative_to()) uses backslashes; the manifest keys use "/".
+        fake = self.fake()
+        export_metadata(fake, self.backup, ".github")
+        directory = self.backup / "metadata" / ".github"
+        nested = sorted(p for p in directory.rglob("*") if p.is_file() and p.parent != directory)
+        self.assertTrue(nested, "fixture must export nested files")
+        real = Path.relative_to
+        with mock.patch.object(Path, "relative_to", lambda self, *a, **k: PureWindowsPath(real(self, *a, **k).as_posix())):
+            export_metadata(fake, self.backup, ".github")
+        self.assertEqual(nested, sorted(p for p in directory.rglob("*") if p.is_file() and p.parent != directory))
 
     def test_export_drops_per_request_clone_token(self):
         fake = self.fake()
