@@ -13,8 +13,8 @@
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
-            ProjectUri = 'https://github.com/apollo-theme/powershell-apollo-theme'
-            LicenseUri = 'https://github.com/apollo-theme/powershell-apollo-theme/blob/main/LICENSE'
+            ProjectUri = 'https://github.com/apollo-theme/apollo-theme/tree/main/powershell'
+            LicenseUri = 'https://github.com/apollo-theme/apollo-theme/blob/main/powershell/LICENSE'
             Tags = @('Apollo', 'Theme', 'PSReadLine')
         }
     }
