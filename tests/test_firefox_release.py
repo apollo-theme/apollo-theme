@@ -135,6 +135,24 @@ class ReleaseNotesTests(unittest.TestCase):
         self.assertIn("- Standalone fix (", notes)
         self.assertNotIn("Standalone start", notes)
 
+    def test_previous_imported_annotated_tag_is_found_by_ref_name(self):
+        commit_file(self.repo, "firefox/a.txt", "Imported release")
+        git("tag", "-a", "v1.1.1", "-m", "x", cwd=self.repo)
+        git("update-ref", "refs/tags/firefox-v1.1.1", git("rev-parse", "v1.1.1", cwd=self.repo), cwd=self.repo)
+        git("tag", "-d", "v1.1.1", cwd=self.repo)
+        commit_file(self.repo, "firefox/b.txt", "First monorepo change")
+        commit_file(self.repo, "firefox/c.txt", "Second monorepo change")
+        git("tag", "firefox-v1.1.3", cwd=self.repo)
+        notes = release_notes("firefox-v1.1.3", root=self.repo)
+        self.assertIn("### Commits since firefox-v1.1.1\n", notes)
+        self.assertIn("- First monorepo change (", notes)
+        self.assertIn("- Second monorepo change (", notes)
+        self.assertNotIn("Imported release", notes)
+        self.assertIn(
+            "**Full Changelog**: https://github.com/apollo-theme/apollo-theme/compare/firefox-v1.1.1...firefox-v1.1.3",
+            notes,
+        )
+
     @unittest.skipUnless(tag_exists("firefox-v1.1.1") and tag_exists("firefox-v1.1.0"), "imported Firefox tags not fetched")
     def test_imported_tag_in_this_repository(self):
         notes = release_notes("firefox-v1.1.1")

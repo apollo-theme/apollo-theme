@@ -62,10 +62,18 @@ def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, encoding="utf-8")
 
 
+def previous_tag(tag: str, root: Path = ROOT) -> str:
+    # Read ref names directly: imported annotated tags keep their old internal
+    # name (v1.1.1), so `git describe` reports synthetic names for them.
+    listed = _git(root, "tag", "--list", "firefox-v*", "--merged", f"{tag}^", "--sort=-version:refname")
+    if listed.returncode != 0:
+        return ""
+    return next((name for name in listed.stdout.split() if name != tag), "")
+
+
 def release_notes(tag: str, root: Path = ROOT) -> str:
     root = Path(root)
-    previous = _git(root, "describe", "--tags", "--abbrev=0", "--match", "firefox-v*", f"{tag}^")
-    prev = previous.stdout.strip() if previous.returncode == 0 else ""
+    prev = previous_tag(tag, root)
     log_range = f"{prev}..{tag}" if prev else tag
     # Imported firefox-v* tags predate the monorepo and keep files at the root;
     # only filter by firefox/ when the tagged tree actually contains it.
