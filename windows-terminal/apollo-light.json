@@ -1,0 +1,23 @@
+{
+  "name": "Apollo Light",
+  "background": "#f9f5d7",
+  "foreground": "#3c3836",
+  "cursorColor": "#8a5200",
+  "selectionBackground": "#ebdbb2",
+  "black": "#3c3836",
+  "red": "#9d0006",
+  "green": "#6b6700",
+  "yellow": "#8a5200",
+  "blue": "#076678",
+  "purple": "#8f3f71",
+  "cyan": "#356b4d",
+  "white": "#504945",
+  "brightBlack": "#665c54",
+  "brightRed": "#9d0006",
+  "brightGreen": "#6b6700",
+  "brightYellow": "#8a5200",
+  "brightBlue": "#076678",
+  "brightPurple": "#8f3f71",
+  "brightCyan": "#356b4d",
+  "brightWhite": "#282828"
+}
