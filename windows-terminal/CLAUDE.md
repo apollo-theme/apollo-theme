@@ -2,7 +2,9 @@
 
 ## Architecture
 
-This standalone repository maps `palette/apollo.json` to existing dark `apollo.json` and `palette/apollo-light.json` to additive `apollo-light.json`. Existing dark bytes, filename, scheme name `Apollo`, and profile activation remain unchanged. Light uses scheme name `Apollo Light`.
+This app lives at `windows-terminal/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own exact snapshots of the canonical palettes in `palette/`, runs standalone from this folder without the rest of the monorepo, and is validated by the root CI job `windows-terminal`.
+
+This app maps `palette/apollo.json` to existing dark `apollo.json` and `palette/apollo-light.json` to additive `apollo-light.json`. Existing dark bytes, filename, scheme name `Apollo`, and profile activation remain unchanged. Light uses scheme name `Apollo Light`.
 
 `scripts/generate.py` retains pure `render(palette)` JSON serialization behind an ordered two-output map. Check mode rejects missing, stale, and unexpected root-level JSON artifacts. `scripts/check.py` validates both identities, appearances, selection semantics, exact scheme fields, mappings, slot order, and drift. Tests pin the exact light palette hash and cover both variants.
 
@@ -10,7 +12,7 @@ Each artifact is one scheme object for insertion into a user's `schemes` array, 
 
 ## Install and activate
 
-Users paste one or both objects into the top-level `schemes` array. `"colorScheme": "Apollo"` must continue to select dark; `"colorScheme": "Apollo Light"` selects light.
+Users clone the monorepo once to `~/.config/apollo-theme` (idempotent `[ -d ... ] || git clone`) and paste one or both objects from `~/.config/apollo-theme/windows-terminal/` into the top-level `schemes` array, or open the raw files at `https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/windows-terminal/<file>` without cloning. `"colorScheme": "Apollo"` must continue to select dark; `"colorScheme": "Apollo Light"` selects light.
 
 ## Uninstall
 

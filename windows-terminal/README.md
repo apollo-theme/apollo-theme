@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-windows-terminal"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/windows-terminal-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/windows-terminal-apollo-theme/ci.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
-  <a href="https://github.com/apollo-theme/windows-terminal-apollo-theme/releases/latest"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/windows-terminal-apollo-theme?display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
-  <a href="https://github.com/apollo-theme/windows-terminal-apollo-theme/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=windows-terminal-v"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=windows-terminal-v*&amp;display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://github.com/microsoft/terminal"><img alt="Target: Windows Terminal on Windows" src="https://img.shields.io/badge/target-Windows%20Terminal%20%C2%B7%20Windows-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/blob/main/palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=for-the-badge&amp;labelColor=141617"></a>
 </p>
@@ -21,7 +21,18 @@
 
 ## Install
 
-Open Windows Terminal **Settings**, choose **Open JSON file**, and paste the object from `apollo.json`, `apollo-light.json`, or both into the top-level `schemes` array. Do not replace the entire settings file.
+Clone the Apollo Theme repository once; the command is safe to rerun:
+
+```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
+```
+
+The schemes are then at `~/.config/apollo-theme/windows-terminal/apollo.json` (Apollo Dark) and `~/.config/apollo-theme/windows-terminal/apollo-light.json` (Apollo Light). To skip the clone, open the raw files instead:
+
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/windows-terminal/apollo.json
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/windows-terminal/apollo-light.json
+
+Open Windows Terminal **Settings**, choose **Open JSON file**, and paste the object from one or both files into the top-level `schemes` array. Do not replace the entire settings file.
 
 ## Activate
 

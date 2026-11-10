@@ -1,6 +1,6 @@
 # iTerm2 Apollo Themes
 
-This standalone repository publishes existing dark `Apollo.itermcolors` from `palette/apollo.json` and additive `Apollo Light.itermcolors` from `palette/apollo-light.json`. The dark artifact's filename, bytes, and meaning remain unchanged.
+This app lives at `iterm2/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot, runs standalone from this folder without the rest of the monorepo, and is validated by the root CI job `iterm2` (macOS). It publishes existing dark `Apollo.itermcolors` from `palette/apollo.json` and additive `Apollo Light.itermcolors` from `palette/apollo-light.json`. The dark artifact's filename, bytes, and meaning remain unchanged.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Do not add application settings or installation side effects.
 
 ## Install and activate
 
-Import either or both preset files through **Settings → Profiles → Colors → Color Presets… → Import…**. Choose **Apollo** for existing dark or **Apollo Light** for light. Importing must not automatically change current profiles.
+Users clone the monorepo once to `~/.config/apollo-theme` (idempotent `[ -d ... ] || git clone`) and import `~/.config/apollo-theme/iterm2/Apollo.itermcolors` and/or `~/.config/apollo-theme/iterm2/Apollo Light.itermcolors`, or download `https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/iterm2/<file>` without cloning, through **Settings → Profiles → Colors → Color Presets… → Import…**. Public docs call the unsuffixed dark preset **Apollo Dark**; its native preset name stays **Apollo**. Choose **Apollo** for existing dark or **Apollo Light** for light. Importing must not automatically change current profiles.
 
 ## Uninstall
 

@@ -1,6 +1,6 @@
 # Apple Terminal Apollo Themes
 
-This standalone repository publishes existing dark `Apollo.terminal` from `palette/apollo.json` and additive `Apollo Light.terminal` from `palette/apollo-light.json`. The dark artifact's filename, bytes, internal profile name, and activation semantics remain unchanged.
+This app lives at `apple-terminal/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot, runs standalone from this folder without the rest of the monorepo, and is validated by the root CI job `apple-terminal` (macOS). It publishes existing dark `Apollo.terminal` from `palette/apollo.json` and additive `Apollo Light.terminal` from `palette/apollo-light.json`. The dark artifact's filename, bytes, internal profile name, and activation semantics remain unchanged.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Never add shell commands, run `defaults write`, import automatically, or mutate 
 
 ## Install and activate
 
-Import either or both files through Terminal's profile importer. Select **Apollo** for existing dark or **Apollo Light** for light, and choose **Default** only by explicit user action. Existing windows remain unchanged.
+Users clone the monorepo once to `~/.config/apollo-theme` (idempotent `[ -d ... ] || git clone`) and import `~/.config/apollo-theme/apple-terminal/Apollo.terminal` and/or `~/.config/apollo-theme/apple-terminal/Apollo Light.terminal`, or download `https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/apple-terminal/<file>` without cloning, through Terminal's profile importer. Public docs call the unsuffixed dark profile **Apollo Dark**; its native profile name stays **Apollo**. Select **Apollo** for existing dark or **Apollo Light** for light, and choose **Default** only by explicit user action. Existing windows remain unchanged.
 
 ## Uninstall
 

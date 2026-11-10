@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/apollo-theme/firefox-apollo-theme"
+    "url": "https://github.com/apollo-theme/apollo-theme.git",
+    "directory": "firefox"
   },
   "scripts": {
     "dev": "npm run dev:dark",
