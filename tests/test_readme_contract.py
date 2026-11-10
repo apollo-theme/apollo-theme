@@ -10,6 +10,34 @@ import check  # noqa: E402
 
 CLONE_COMMAND = '[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"'
 REMOVE_CLONE = 'rm -rf "$HOME/.config/apollo-theme"'
+REMOVAL_FORMS = (
+    'rm -rf "$HOME/.config/apollo-theme"',
+    'rm -fr "$HOME/.config/apollo-theme"',
+    'rm -Rf "$HOME/.config/apollo-theme"',
+    'rm -r -f "$HOME/.config/apollo-theme"',
+    'rm -r "$HOME/.config/apollo-theme"',
+    'rm -R $HOME/.config/apollo-theme/',
+    'rm --recursive --force "$HOME/.config/apollo-theme"',
+    'rm --force --recursive -- "$HOME/.config/apollo-theme/"',
+    'rm -rf -- ~/.config/apollo-theme/',
+    'rm -rf ${HOME}/.config/apollo-theme',
+    'rm -rf "${HOME}/.config/apollo-theme/"',
+    'rm -rf $HOME/.config/apollo-theme',
+    'command rm -rf "$HOME/.config/apollo-theme" && echo done',
+    'rm -rf "$HOME/.cache/x" "$HOME/.config/apollo-theme"',
+    'Remove-Item -Recurse -Force "$HOME/.config/apollo-theme"',
+    'Remove-Item "$HOME\\.config\\apollo-theme" -Recurse',
+    'Remove-Item -LiteralPath $env:HOME/.config/apollo-theme/ -Recurse -Force',
+    'remove-item -recurse ~/.config/apollo-theme',
+)
+NON_REMOVAL_FORMS = (
+    'rm -rf "$HOME/.config/apollo-theme/bat/x"',
+    'rm -rf ~/.config/apollo-theme/.installed-theme-hashes',
+    'rm -rf "$HOME/.config/apollo-theme-old"',
+    'rm -f "$HOME/.config/bat/themes/Apollo.tmTheme"',
+    'Remove-Item -Recurse "$HOME/.config/apollo-theme/powershell/x"',
+    'Remove-Item "$HOME/.config/apollo-theme/x.ps1"',
+)
 CLONE_NAMES = ", ".join(APPS[slug]["name"] for slug in CLONE_APPS)
 
 
@@ -126,6 +154,50 @@ class ReadmeContractTests(unittest.TestCase):
 
     def test_monorepo_and_site_urls_are_not_dead(self):
         run("bat", valid_readme("bat"), claude=f"{MONOREPO}/tree/main/bat and https://github.com/apollo-theme/apollo-theme.github.io")
+
+    def test_every_removal_form_is_rejected_outside_remove_section(self):
+        for form in REMOVAL_FORMS:
+            with self.subTest(form=form), self.assertRaisesRegex(ValueError, "removed outside.*Uninstall"):
+                run("bat", valid_readme("bat", uninstall=f"rm -f x\n{form}"))
+
+    def test_every_removal_form_is_allowed_in_remove_section(self):
+        for form in REMOVAL_FORMS:
+            section = f"## Remove the shared clone\n\n{CLONE_NAMES} all read from `~/.config/apollo-theme`.\n\n```sh\n{form}\n```\n"
+            with self.subTest(form=form):
+                run("bat", valid_readme("bat", remove_section=section))
+
+    def test_subpath_and_sibling_deletions_are_not_clone_removal(self):
+        for form in NON_REMOVAL_FORMS:
+            with self.subTest(form=form):
+                run("bat", valid_readme("bat", uninstall=form))
+            section = f"## Remove the shared clone\n\n{CLONE_NAMES} all read from `~/.config/apollo-theme`.\n\n```sh\n{form}\n```\n"
+            with self.subTest(form=form, where="remove section"), self.assertRaisesRegex(ValueError, "Remove the shared clone command"):
+                run("bat", valid_readme("bat", remove_section=section))
+
+    def test_removal_in_first_of_duplicate_uninstall_sections_fails(self):
+        readme = valid_readme("bat", uninstall=REMOVE_CLONE).replace(
+            "## Remove the shared clone", "## Uninstall\n\nNothing else to remove.\n\n## Remove the shared clone"
+        )
+        self.assertEqual(2, readme.count("## Uninstall"))
+        with self.assertRaisesRegex(ValueError, "removed outside.*Uninstall"):
+            run("bat", readme)
+
+    def test_removal_in_preamble_fails(self):
+        readme = valid_readme("bat").replace(
+            "Both Apollo Dark and Apollo Light are included.",
+            f"Both Apollo Dark and Apollo Light are included.\n\n```sh\n{REMOVE_CLONE}\n```",
+        )
+        with self.assertRaisesRegex(ValueError, "removed outside.*preamble"):
+            run("bat", readme)
+
+    def test_two_remove_sections_need_one_complete_and_may_both_remove(self):
+        complete = f"## Remove the shared clone\n\n{CLONE_NAMES} all read from `~/.config/apollo-theme`. Then run `{REMOVE_CLONE}`.\n"
+        removal_only = f"## Remove the shared clone\n\nOr: `rm -fr ~/.config/apollo-theme/`\n"
+        names_only = f"## Remove the shared clone\n\n{CLONE_NAMES} all read from `~/.config/apollo-theme`.\n"
+        run("bat", valid_readme("bat", remove_section=removal_only + "\n" + complete))
+        run("bat", valid_readme("bat", remove_section=complete + "\n" + removal_only))
+        with self.assertRaisesRegex(ValueError, "Remove the shared clone"):
+            run("bat", valid_readme("bat", remove_section=names_only + "\n" + removal_only))
 
 
 if __name__ == "__main__":

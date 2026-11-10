@@ -358,26 +358,75 @@ def forbidden_identity_terms(slug: str, text: str) -> list[str]:
 
 
 SHARED_CLONE_COMMAND = '[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"'
-SHARED_CLONE_REMOVAL = re.compile(r"""rm\s+-rf\s+(?:"\$\{?HOME\}?/\.config/apollo-theme/?"|\$\{?HOME\}?/\.config/apollo-theme/?|~/\.config/apollo-theme/?)(?![\w./-])""")
+SHARED_CLONE_TARGET = re.compile(
+    r"""["']?(?:\$HOME|\$\{HOME\}|\$env:HOME|\$env:USERPROFILE|~)[/\\]\.config[/\\]apollo-theme[/\\]?["']?""",
+    re.IGNORECASE,
+)
+COMMAND_SEPARATOR = re.compile(r"&&|\|\||\$\(|[;|&`()\n]")
+POWERSHELL_RECURSE = re.compile(r"-rec(?:u(?:r(?:s(?:e)?)?)?)?(?::\$true)?", re.IGNORECASE)
 REMOVE_SHARED_CLONE_HEADING = "Remove the shared clone"
+PREAMBLE = "(preamble)"
 DEAD_REPOSITORY_URL = re.compile(r"github\.com/apollo-theme/[a-z0-9-]+-apollo-theme", re.IGNORECASE)
 
 
-def readme_sections(readme: str) -> dict[str, str]:
-    """Map each ``## `` heading to its body, up to the next ``## `` heading."""
-    sections: dict[str, str] = {}
-    heading: str | None = None
-    lines: list[str] = []
+def _rm_removes_clone(arguments: list[str]) -> bool:
+    recursive, operands, options_done = False, [], False
+    for argument in arguments:
+        if not options_done and argument == "--":
+            options_done = True
+        elif not options_done and argument.startswith("--"):
+            recursive = recursive or argument == "--recursive"
+        elif not options_done and re.fullmatch(r"-[A-Za-z]+", argument):
+            recursive = recursive or "r" in argument or "R" in argument
+        else:
+            operands.append(argument)
+    return recursive and any(SHARED_CLONE_TARGET.fullmatch(operand) for operand in operands)
+
+
+def _remove_item_removes_clone(arguments: list[str]) -> bool:
+    recursive = any(POWERSHELL_RECURSE.fullmatch(argument) for argument in arguments)
+    return recursive and any(SHARED_CLONE_TARGET.fullmatch(argument) for argument in arguments)
+
+
+def removes_shared_clone(text: str) -> bool:
+    """True when any shell ``rm`` or PowerShell ``Remove-Item`` recursively deletes the shared clone itself."""
+    for segment in COMMAND_SEPARATOR.split(text):
+        tokens = segment.split()
+        for index, token in enumerate(tokens):
+            command = token.lstrip("\\").lower()
+            if command == "rm" and _rm_removes_clone(tokens[index + 1 :]):
+                return True
+            if command == "remove-item" and _remove_item_removes_clone(tokens[index + 1 :]):
+                return True
+    return False
+
+
+def readme_sections(readme: str) -> list[tuple[str, str]]:
+    """Split a README into ordered ``(heading, body)`` pairs at each ``## `` heading, starting with the preamble."""
+    sections: list[tuple[str, str]] = []
+    heading, lines = PREAMBLE, []
     for line in readme.splitlines():
         if line.startswith("## "):
-            if heading is not None:
-                sections[heading] = "\n".join(lines)
+            sections.append((heading, "\n".join(lines)))
             heading, lines = line.removeprefix("## ").strip(), []
-        elif heading is not None:
+        else:
             lines.append(line)
-    if heading is not None:
-        sections[heading] = "\n".join(lines)
+    sections.append((heading, "\n".join(lines)))
     return sections
+
+
+def _remove_section_problems(body: str) -> list[str]:
+    problems = []
+    if not removes_shared_clone(body):
+        problems.append(f"{REMOVE_SHARED_CLONE_HEADING} command")
+    omitted = [
+        APPS[other]["name"]
+        for other in CLONE_APPS
+        if not re.search(rf"(?<![\w-]){re.escape(APPS[other]['name'])}(?![\w-])", body)
+    ]
+    if omitted:
+        problems.append(f"{REMOVE_SHARED_CLONE_HEADING} apps {omitted}")
+    return problems
 
 
 def check_shared_clone_contract(slug: str, readme: str) -> None:
@@ -388,16 +437,14 @@ def check_shared_clone_contract(slug: str, readme: str) -> None:
         if not readme_blocks(readme, marker):
             problems.append(f"smoke:{marker} block")
     sections = readme_sections(readme)
-    remove_section = sections.get(REMOVE_SHARED_CLONE_HEADING)
-    if remove_section is None:
+    remove_sections = [body for heading, body in sections if heading == REMOVE_SHARED_CLONE_HEADING]
+    if not remove_sections:
         problems.append(f"{REMOVE_SHARED_CLONE_HEADING} section")
     else:
-        if not SHARED_CLONE_REMOVAL.search(remove_section):
-            problems.append(f"{REMOVE_SHARED_CLONE_HEADING} command")
-        omitted = [APPS[other]["name"] for other in CLONE_APPS if not re.search(rf"(?<![\w-]){re.escape(APPS[other]['name'])}(?![\w-])", remove_section)]
-        if omitted:
-            problems.append(f"{REMOVE_SHARED_CLONE_HEADING} apps {omitted}")
-    misplaced = [heading for heading, body in sections.items() if heading != REMOVE_SHARED_CLONE_HEADING and SHARED_CLONE_REMOVAL.search(body)]
+        candidates = [_remove_section_problems(body) for body in remove_sections]
+        if all(candidates):
+            problems.extend(min(candidates, key=len))
+    misplaced = [heading for heading, body in sections if heading != REMOVE_SHARED_CLONE_HEADING and removes_shared_clone(body)]
     if misplaced:
         problems.append(f"shared clone removed outside {REMOVE_SHARED_CLONE_HEADING!r} (in {misplaced})")
     if problems:
