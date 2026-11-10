@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-bat"><img alt="Preview" src="https://img.shields.io/badge/status-Preview-fabd2f?style=flat-square&labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=bat-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=bat-v&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=bat-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=bat-v*&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-b8bb26?style=flat-square&labelColor=141617"></a>
   <a href="https://github.com/sharkdp/bat"><img alt="Theme for bat" src="https://img.shields.io/badge/app-bat-83a598?style=flat-square&labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=flat-square&labelColor=141617"></a>

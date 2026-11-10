@@ -136,6 +136,11 @@ class ReadmeContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "release badge"):
             run("bat", old)
 
+    def test_release_badge_filter_must_be_a_glob(self):
+        exact = valid_readme("bat").replace("?filter=bat-v*", "?filter=bat-v")
+        with self.assertRaisesRegex(ValueError, "release badge"):
+            run("bat", exact)
+
     def test_license_link_must_be_local_or_monorepo_path(self):
         readme = valid_readme("bat")
         run("bat", readme.replace(f"{MONOREPO}/blob/main/bat/LICENSE", "LICENSE"))

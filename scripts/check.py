@@ -468,7 +468,7 @@ def check_readme_contract(slug: str, readme: str | None = None, *, claude: str |
     )
     required_fragments = {
         "workflow badge": "img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml",
-        "release badge": f"img.shields.io/github/v/release/apollo-theme/apollo-theme?filter={slug}-v",
+        "release badge": f"img.shields.io/github/v/release/apollo-theme/apollo-theme?filter={slug}-v*",
         "preview badge": 'alt="Preview"',
         "canonical palette badge": "img.shields.io/badge/palette-canonical-",
         "dark preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{slug}.svg",
