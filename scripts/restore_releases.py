@@ -17,6 +17,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -150,14 +151,28 @@ def _with_notes(plan: Plan, action):
 
 def _create(run, plan: Plan) -> None:
     def create(notes: str) -> None:
-        _gh(
-            run, "release", "create", plan.tag, "--repo", MONOREPO, "--verify-tag",
+        command = [
+            "gh", "release", "create", plan.tag, "--repo", MONOREPO, "--verify-tag",
             "--title", plan.title, "--notes-file", notes, "--latest=false",
             *(["--prerelease"] if plan.prerelease else []),
             *(str(path) for path in plan.assets),
-        )
+        ]
+        result = run(command, capture_output=True, text=True)
+        if result.returncode != 0 and "already exists" not in (result.stderr or ""):
+            raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
 
     _with_notes(plan, create)
+
+
+def _live_release_settled(run, tag: str, sleep, attempts: int = 6) -> dict | None:
+    """``_live_release`` retried with backoff: GitHub's release listing lags just-created releases."""
+    for attempt in range(attempts):
+        live = _live_release(run, tag)
+        if live is not None:
+            return live
+        if attempt < attempts - 1:
+            sleep(2 ** attempt)
+    return None
 
 
 def _repair(run, plan: Plan, uploads: list[Path], metadata: list[str]) -> None:
@@ -176,7 +191,7 @@ def _repair(run, plan: Plan, uploads: list[Path], metadata: list[str]) -> None:
     _with_notes(plan, edit)
 
 
-def apply(plans: list[Plan], run=subprocess.run) -> list[tuple[str, str]]:
+def apply(plans: list[Plan], run=subprocess.run, sleep=time.sleep) -> list[tuple[str, str]]:
     """Create or repair each release; return ``(tag, "created"|"repaired"|"complete")``.
 
     Any gh failure raises ``CalledProcessError``; rerunning resumes from whatever was left behind.
@@ -200,7 +215,7 @@ def apply(plans: list[Plan], run=subprocess.run) -> list[tuple[str, str]]:
                 continue
             _repair(run, plan, uploads, metadata)
             status = "repaired"
-        live = _live_release(run, plan.tag)
+        live = _live_release_settled(run, plan.tag, sleep)
         if live is None:
             raise RuntimeError(f"{plan.tag}: release not found after {status}; rerun --apply")
         uploads, metadata, unexpected = _gaps(plan, live)

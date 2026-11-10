@@ -205,6 +205,8 @@ class FakeGitHub:
         self.fail_upload_after = None  # number of successful asset uploads before failing
         self.ignore_edits = False
         self.uploads = 0
+        self.listing_lag = 0  # listings that still omit a just-created release
+        self._hidden = {}
 
     @property
     def writes(self):
@@ -231,17 +233,22 @@ class FakeGitHub:
         assert command[0] == "gh", command
         if command[1] == "api":
             assert command[2:] == ["repos/apollo-theme/apollo-theme/releases", "--paginate", "--slurp"], command
-            return self._ok(command, json.dumps([list(self.releases.values())]))
+            visible = [release for tag, release in self.releases.items() if self._hidden.get(tag, 0) <= 0]
+            self._hidden = {tag: left - 1 for tag, left in self._hidden.items()}
+            return self._ok(command, json.dumps([visible]))
         action, tag = command[2], command[3]
         assert self._option(command, "--repo") == "apollo-theme/apollo-theme", command
         if action == "create":
             assert "--verify-tag" in command and "--latest=false" in command, command
+            if tag in self.releases:
+                return subprocess.CompletedProcess(command, 1, "", "a release with the same tag name already exists")
             release = {
                 "tag_name": tag, "name": self._option(command, "--title"),
                 "body": Path(self._option(command, "--notes-file")).read_text(encoding="utf-8"),
                 "draft": True, "prerelease": "--prerelease" in command, "assets": [],
             }
             self.releases[tag] = release
+            self._hidden[tag] = self.listing_lag
             valued = {"--repo", "--title", "--notes-file"}
             paths, skip = [], False
             for argument in command[4:]:
@@ -299,6 +306,30 @@ class ApplyTests(unittest.TestCase):
         self.assertEqual(fake._option(create, "--title"), "bat v0.1.0")
         self.assertEqual(len(fake.writes), 1)
         self.assertFalse(fake.releases["bat-v0.1.0"]["draft"])
+
+    def test_listing_lag_after_create_is_retried(self):
+        fake = FakeGitHub()
+        fake.listing_lag = 2
+        self.assertEqual(apply([self.plan], run=fake, sleep=lambda seconds: None), [("bat-v0.1.0", "created")])
+        self.assertEqual(len(fake.writes), 1)
+
+    def test_listing_lag_beyond_retries_raises(self):
+        fake = FakeGitHub()
+        fake.listing_lag = 99
+        with self.assertRaisesRegex(RuntimeError, "not found after created"):
+            apply([self.plan], run=fake, sleep=lambda seconds: None)
+
+    def test_rerun_while_listing_is_stale_does_not_create_twice(self):
+        fake = FakeGitHub()
+        fake.listing_lag = 99
+        with self.assertRaises(RuntimeError):
+            apply([self.plan], run=fake, sleep=lambda seconds: None)
+        fake.listing_lag = 0
+        fake._hidden = {"bat-v0.1.0": 1}
+        fake.calls.clear()
+        self.assertEqual(apply([self.plan], run=fake, sleep=lambda seconds: None), [("bat-v0.1.0", "complete")])
+        self.assertEqual(1, sum(1 for tag in fake.releases if tag == "bat-v0.1.0"))
+        self.assertFalse(any(call[2] in {"upload", "edit"} for call in fake.writes))
 
     def test_create_upload_failure_then_second_run_repairs(self):
         fake = FakeGitHub()
