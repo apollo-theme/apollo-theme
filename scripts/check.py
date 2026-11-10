@@ -12,8 +12,10 @@ from pathlib import Path
 
 from common import (
     APPS,
+    CLONE_APPS,
     FORBIDDEN_LINEAGE_PHRASES,
     HEX_COLOR,
+    MONOREPO,
     ROOT,
     SLUGS,
     contrast_ratio,
@@ -21,6 +23,7 @@ from common import (
     load_palette,
     load_palettes,
     markdown_anchor,
+    readme_blocks,
 )
 
 EXPECTED_LIGHT_COLORS = {
@@ -354,24 +357,71 @@ def forbidden_identity_terms(slug: str, text: str) -> list[str]:
     return list(dict.fromkeys(forbidden))
 
 
-def check_readme_contract(slug: str, readme: str | None = None) -> None:
-    metadata = APPS[slug]
+SHARED_CLONE_COMMAND = '[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"'
+SHARED_CLONE_REMOVAL = re.compile(r"""rm\s+-rf\s+(?:"\$\{?HOME\}?/\.config/apollo-theme/?"|\$\{?HOME\}?/\.config/apollo-theme/?|~/\.config/apollo-theme/?)(?![\w./-])""")
+REMOVE_SHARED_CLONE_HEADING = "Remove the shared clone"
+DEAD_REPOSITORY_URL = re.compile(r"github\.com/apollo-theme/[a-z0-9-]+-apollo-theme", re.IGNORECASE)
+
+
+def readme_sections(readme: str) -> dict[str, str]:
+    """Map each ``## `` heading to its body, up to the next ``## `` heading."""
+    sections: dict[str, str] = {}
+    heading: str | None = None
+    lines: list[str] = []
+    for line in readme.splitlines():
+        if line.startswith("## "):
+            if heading is not None:
+                sections[heading] = "\n".join(lines)
+            heading, lines = line.removeprefix("## ").strip(), []
+        elif heading is not None:
+            lines.append(line)
+    if heading is not None:
+        sections[heading] = "\n".join(lines)
+    return sections
+
+
+def check_shared_clone_contract(slug: str, readme: str) -> None:
+    problems: list[str] = []
+    if SHARED_CLONE_COMMAND not in readme:
+        problems.append("shared clone install command")
+    for marker in ("install", "uninstall"):
+        if not readme_blocks(readme, marker):
+            problems.append(f"smoke:{marker} block")
+    sections = readme_sections(readme)
+    remove_section = sections.get(REMOVE_SHARED_CLONE_HEADING)
+    if remove_section is None:
+        problems.append(f"{REMOVE_SHARED_CLONE_HEADING} section")
+    else:
+        if not SHARED_CLONE_REMOVAL.search(remove_section):
+            problems.append(f"{REMOVE_SHARED_CLONE_HEADING} command")
+        omitted = [APPS[other]["name"] for other in CLONE_APPS if not re.search(rf"(?<![\w-]){re.escape(APPS[other]['name'])}(?![\w-])", remove_section)]
+        if omitted:
+            problems.append(f"{REMOVE_SHARED_CLONE_HEADING} apps {omitted}")
+    misplaced = [heading for heading, body in sections.items() if heading != REMOVE_SHARED_CLONE_HEADING and SHARED_CLONE_REMOVAL.search(body)]
+    if misplaced:
+        problems.append(f"shared clone removed outside {REMOVE_SHARED_CLONE_HEADING!r} (in {misplaced})")
+    if problems:
+        raise ValueError(f"{slug}: README shared clone contract violated {problems}")
+
+
+def check_readme_contract(slug: str, readme: str | None = None, *, claude: str | None = None, metadata: str | None = None) -> None:
+    app = APPS[slug]
     directory = ROOT / slug
     if readme is None:
         readme = (directory / "README.md").read_text(encoding="utf-8")
-    public_metadata = [
-        readme,
-        (directory / "CLAUDE.md").read_text(encoding="utf-8"),
-        public_identity_metadata(directory),
-    ]
+    if claude is None:
+        claude = (directory / "CLAUDE.md").read_text(encoding="utf-8")
+    if metadata is None:
+        metadata = public_identity_metadata(directory)
+    public_metadata = [readme, claude, metadata]
     combined = "\n".join(public_metadata).lower()
     expected_titles = (
-        f"<h1 align=\"center\">{metadata['name']} Apollo Theme</h1>",
-        f"<h1 align=\"center\">{metadata['name']} Apollo Themes</h1>",
+        f"<h1 align=\"center\">{app['name']} Apollo Theme</h1>",
+        f"<h1 align=\"center\">{app['name']} Apollo Themes</h1>",
     )
     required_fragments = {
-        "workflow badge": "img.shields.io/github/actions/workflow/status/apollo-theme/",
-        "release badge": "img.shields.io/github/v/release/apollo-theme/",
+        "workflow badge": "img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml",
+        "release badge": f"img.shields.io/github/v/release/apollo-theme/apollo-theme?filter={slug}-v",
         "preview badge": 'alt="Preview"',
         "canonical palette badge": "img.shields.io/badge/palette-canonical-",
         "dark preview image": f"raw.githubusercontent.com/apollo-theme/apollo-theme.github.io/main/previews/{slug}.svg",
@@ -386,14 +436,14 @@ def check_readme_contract(slug: str, readme: str | None = None) -> None:
         missing.append("app-first title")
     headings = (line.removeprefix("## ") for line in readme.splitlines() if line.startswith("## "))
     anchors = {markdown_anchor(heading) for heading in headings}
-    if metadata["install_anchor"] not in anchors:
+    if app["install_anchor"] not in anchors:
         missing.append("install section")
     lowered = readme.lower()
-    if 'href="license"' not in lowered and not re.search(r'href="https://github\.com/apollo-theme/[^"/]+/blob/main/license"', lowered):
+    if 'href="license"' not in lowered and f'href="{MONOREPO}/blob/main/{slug}/license"'.lower() not in lowered:
         missing.append("license link")
     if "img.shields.io/badge/license-mit" not in lowered and "img.shields.io/github/license/" not in lowered:
         missing.append("license badge")
-    if f"img.shields.io/badge/{metadata['badge_fragment']}".lower() not in lowered:
+    if f"img.shields.io/badge/{app['badge_fragment']}".lower() not in lowered:
         missing.append("app or platform badge")
     prose = visible_prose(readme)
     appearance_names = ("Apollo Dark", "Apollo Light")
@@ -406,6 +456,11 @@ def check_readme_contract(slug: str, readme: str | None = None) -> None:
         missing.append(f"visible appearance names {missing_appearances}")
     if missing:
         raise ValueError(f"{slug}: README branding contract missing {missing}")
+    dead = sorted(set(DEAD_REPOSITORY_URL.findall("\n".join(public_metadata))))
+    if dead:
+        raise ValueError(f"{slug}: per-app repository URLs must point to the monorepo {dead}")
+    if slug in CLONE_APPS:
+        check_shared_clone_contract(slug, readme)
     forbidden = forbidden_identity_terms(slug, combined)
     if forbidden:
         raise ValueError(f"{slug}: forbidden lineage phrases {forbidden}")
