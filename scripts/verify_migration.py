@@ -13,27 +13,32 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import urllib.request
 from pathlib import Path
 
 from common import ROOT, SLUGS
-from migration import MigrationError, Source, repo_name, source_for
+from migration import (
+    DEFAULT_BACKUP,
+    DEFAULT_RETIRED,
+    RETIRED,
+    MigrationError,
+    Source,
+    bundle_source,
+    app_release_dirs,
+    migrated_body,
+    release_title,
+    source_for,
+    version_key,
+)
 from sync_palette import PALETTE_FILES, PALETTE_REPOSITORY
 
 ORG = "apollo-theme"
+MONOREPO = f"{ORG}/apollo-theme"
+ROOT_RELEASE_TAGS = ("v0.1.0", "v0.1.1", "v0.2.0", "v0.3.0", "v0.3.1")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
-
-def _default_build_dir(name: str) -> Path:
-    for candidate in (ROOT / ".build" / name, ROOT.parent / name):
-        if candidate.exists():
-            return candidate
-    return ROOT / ".build" / name
-
-
-DEFAULT_BACKUP = _default_build_dir("org-backup-2026-11-09")
-DEFAULT_RETIRED = _default_build_dir("apollo-light-crlf-audit")
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
@@ -279,6 +284,145 @@ def check_live_source(repo: str, backup: Path, ls_remote=run_ls_remote, api=gh_a
     return errors
 
 
+# Restored releases --------------------------------------------------------
+
+
+def gh_release_asset(tag: str, name: str) -> bytes:
+    with tempfile.TemporaryDirectory() as directory:
+        subprocess.run(
+            ["gh", "release", "download", tag, "--repo", MONOREPO, "-p", name, "-D", directory],
+            check=True, capture_output=True, text=True,
+        )
+        return (Path(directory) / name).read_bytes()
+
+
+def _check_restored(slug: str, directory: Path, tag: str, live: dict, download) -> list[str]:
+    """One backed-up app release against its restored ``<slug>-<tag>`` monorepo release."""
+    path = directory / f"{tag}.json"
+    release = json.loads(path.read_text(encoding="utf-8"))
+    restored = f"{slug}-{tag}"
+    errors = check_backup_assets(directory.name, tag, release, directory / tag)
+    if restored not in live:
+        return errors + [f"{restored}: release missing"]
+    expected = normalize(
+        dict(release, tagName=restored, name=release_title(slug, tag, release.get("name") or ""),
+             body=migrated_body(release.get("body") or "", directory.name)),
+        _local_asset(directory / tag),
+    )
+    actual = normalize(live[restored], lambda asset: download(restored, asset["name"]))
+    if actual == expected:
+        return errors
+    if actual["name"] != expected["name"]:
+        errors.append(f"{restored}: title differs")
+    if actual["body"] != expected["body"]:
+        errors.append(f"{restored}: body differs")
+    want = {name: (size, sha) for name, size, sha in expected["assets"]}
+    have = {name: (size, sha) for name, size, sha in actual["assets"]}
+    for name in sorted(want):
+        if name not in have:
+            errors.append(f"{restored}: {name} missing")
+            continue
+        if have[name][0] != want[name][0]:
+            errors.append(f"{restored}: {name} size differs")
+        if have[name][1] != want[name][1]:
+            errors.append(f"{restored}: {name} sha256 differs")
+    errors += [f"{restored}: {name} unexpected" for name in sorted(set(have) - set(want))]
+    return errors
+
+
+def _check_root_releases(backup: Path, live: dict, root: Path, remote_tags: dict) -> list[str]:
+    """apollo-theme v0.1.0..v0.3.1 keep their backed-up name, body, and tag commit."""
+    errors = []
+    try:
+        bundle_tags = bundle_source("apollo-theme", backup / "apollo-theme.bundle").tags
+    except MigrationError as error:
+        errors.append(f"apollo-theme: {error}")
+        bundle_tags = None
+    for tag in ROOT_RELEASE_TAGS:
+        path = backup / "releases" / "apollo-theme" / f"{tag}.json"
+        try:
+            original = normalize(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, ValueError, KeyError) as error:
+            errors.append(f"{tag}: backup unreadable: {error}")
+            continue
+        if tag not in live:
+            errors.append(f"{tag}: release missing")
+        else:
+            current = normalize(dict(live[tag], assets=[]))
+            if (current["name"], current["body"]) != (original["name"], original["body"]):
+                errors.append(f"{tag}: release changed")
+        if bundle_tags is None:
+            continue
+        expected = bundle_tags.get(tag)
+        if expected is None:
+            errors.append(f"{tag}: tag not in apollo-theme.bundle")
+            continue
+        local = _git(root, "rev-parse", "--verify", "-q", f"refs/tags/{tag}^{{commit}}")
+        if local.returncode != 0 or local.stdout.strip() != expected:
+            errors.append(f"{tag}: tag commit changed locally")
+        if remote_tags.get(f"refs/tags/{tag}") != expected:
+            errors.append(f"{tag}: tag commit changed on origin")
+    return errors
+
+
+def check_releases(
+    backup: Path,
+    api=gh_api,
+    download=gh_release_asset,
+    root: Path = ROOT,
+    remote_tags: dict | None = None,
+    slugs: list[str] | None = None,
+    include_root: bool | None = None,
+) -> list[str]:
+    """Restored app releases match the backup; the monorepo's own v0.1.0..v0.3.1 are unchanged.
+
+    ``slugs=None`` checks every backed-up app and, by default, the root releases. Retired apps are skipped.
+    """
+    backup = Path(backup)
+    include_root = slugs is None if include_root is None else include_root
+    errors: list[str] = []
+    try:
+        live = {}
+        for release in api(f"repos/{MONOREPO}/releases"):
+            live[release["tag_name"]] = release
+    except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
+        return [f"releases: {type(error).__name__}: {error}"]
+
+    if slugs is None:
+        try:
+            apps = app_release_dirs(backup)
+        except (OSError, ValueError) as error:
+            return [f"releases: {error}"]
+    else:
+        apps = []
+        for slug in slugs:
+            directory = backup / "releases" / f"{slug}-apollo-theme"
+            if slug in RETIRED:
+                continue
+            if not directory.is_dir():
+                errors.append(f"{slug}: missing release backup {directory}")
+                continue
+            apps.append((slug, directory))
+    for slug, directory in apps:
+        if slug in RETIRED:
+            continue
+        for path in sorted(directory.glob("*.json"), key=lambda p: version_key(p.stem)):
+            try:
+                errors += _check_restored(slug, directory, path.stem, live, download)
+            except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
+                errors.append(f"{slug}-{path.stem}: {type(error).__name__}: {error}")
+
+    if include_root:
+        if remote_tags is None:
+            try:
+                remote_tags = parse_ls_remote(run_ls_remote("--tags", "origin"), peel=True)
+            except (subprocess.CalledProcessError, OSError) as error:
+                errors.append(f"origin: ls-remote --tags failed: {error}")
+                remote_tags = {}
+        errors += _check_root_releases(backup, live, Path(root), remote_tags)
+    return errors
+
+
 # CLI ----------------------------------------------------------------------
 
 
@@ -314,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
     if slugs and not args.offline:
         errors += check_pushed(ROOT)
         errors += check_pin(ROOT)
+        errors += check_releases(args.backup, remote_tags=remote_tags, slugs=[args.app] if args.app else None)
     if args.live_source:
         errors += check_live_source(args.live_source, args.backup)
 

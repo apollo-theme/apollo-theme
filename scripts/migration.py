@@ -1,12 +1,13 @@
 """Facts about the 2026-11-09 consolidation of the per-app repositories into this monorepo."""
 from __future__ import annotations
 
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from common import SLUGS
+from common import ROOT, SLUGS
 
 MIGRATION_LINE = "_Migrated from `apollo-theme/{repo}` on 2026-11-09; the original repository was consolidated into `apollo-theme/apollo-theme`._"
 
@@ -27,6 +28,20 @@ ALLOWLIST = {
 RETIRED = {"wezterm": "0a23a76", "iterm2": "4b8666d", "apple-terminal": "67551c9", "alacritty": "563ac97"}
 
 
+
+
+def _default_build_dir(name: str) -> Path:
+    for candidate in (ROOT / ".build" / name, ROOT.parent / name):
+        if candidate.exists():
+            return candidate
+    return ROOT / ".build" / name
+
+
+DEFAULT_BACKUP = _default_build_dir("org-backup-2026-11-09")
+DEFAULT_RETIRED = _default_build_dir("apollo-light-crlf-audit")
+APP_REPO = re.compile(r"^(?P<slug>.+)-apollo-theme$")
+
+
 class MigrationError(Exception):
     pass
 
@@ -45,6 +60,31 @@ def migrated_body(original: str, repo: str) -> str:
 
 def repo_name(slug: str) -> str:
     return f"{slug}-apollo-theme"
+
+
+def release_title(slug: str, tag: str, name: str) -> str:
+    """Restored release title: ``<slug> <tag>`` when the original name was just the tag, else the original name."""
+    return f"{slug} {tag}" if (name or tag) == tag else name
+
+
+def version_key(tag: str) -> tuple:
+    return tuple(int(part) for part in re.findall(r"\d+", tag)), tag
+
+
+def app_release_dirs(backup: Path) -> list[tuple[str, Path]]:
+    """``(slug, releases/<slug>-apollo-theme)`` for every backed-up app; unknown ``*-apollo-theme`` dirs fail."""
+    releases = Path(backup) / "releases"
+    if not releases.is_dir():
+        raise FileNotFoundError(f"missing release backup {releases}")
+    found = []
+    for directory in sorted(releases.iterdir()):
+        match = APP_REPO.match(directory.name)
+        if not directory.is_dir() or not match:
+            continue
+        if match["slug"] not in SLUGS:
+            raise ValueError(f"unknown app release backup {directory}")
+        found.append((match["slug"], directory))
+    return found
 
 
 def allow_for(slug: str) -> tuple:
