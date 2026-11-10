@@ -567,7 +567,7 @@ class MetadataTests(Base):
         self.assertEqual(manifest, json.loads((directory / "manifest.json").read_text()))
         self.assertEqual({"issues": 1, "pull_requests": 1, "issue_comments": 1, "reviews": 1,
                           "review_comments": 1, "timeline_events": 2}, manifest["counts"])
-        on_disk = {str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()} - {"manifest.json"}
+        on_disk = {p.relative_to(directory).as_posix() for p in directory.rglob("*") if p.is_file()} - {"manifest.json"}
         self.assertEqual(set(manifest["files"]), on_disk)
         for name, digest in manifest["files"].items():
             self.assertEqual(hashlib.sha256((directory / name).read_bytes()).hexdigest(), digest)
