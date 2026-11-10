@@ -327,7 +327,7 @@ class ApplyTests(unittest.TestCase):
         fake.listing_lag = 0
         fake._hidden = {"bat-v0.1.0": 1}
         fake.calls.clear()
-        self.assertEqual(apply([self.plan], run=fake, sleep=lambda seconds: None), [("bat-v0.1.0", "complete")])
+        self.assertEqual(apply([self.plan], run=fake, sleep=lambda seconds: None), [("bat-v0.1.0", "created")])
         self.assertEqual(1, sum(1 for tag in fake.releases if tag == "bat-v0.1.0"))
         self.assertFalse(any(call[2] in {"upload", "edit"} for call in fake.writes))
 
