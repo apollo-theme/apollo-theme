@@ -21,8 +21,8 @@ RESTRICTED_DARK = "#665c54"
 REQUIRED_SECTIONS = {"filekinds", "perms", "size", "users", "links", "git", "git_repo", "file_type"}
 REQUIRED_FILE_KINDS = {"normal", "directory", "symlink", "pipe", "block_device", "char_device", "socket", "special", "executable", "mount_point"}
 README_CONTRACT_MARKERS = {
-    "dark activation command": 'EZA_CONFIG_DIR="$HOME/.config/eza-apollo-theme" eza --color=always -la',
-    "light activation command": 'EZA_CONFIG_DIR="$HOME/.config/eza-apollo-theme/light" eza --color=always -la',
+    "dark activation command": 'EZA_CONFIG_DIR="$HOME/.config/apollo-theme/eza" eza --color=always -la',
+    "light activation command": 'EZA_CONFIG_DIR="$HOME/.config/apollo-theme/eza/light" eza --color=always -la',
 }
 EXPECTED = {
     "dark": {
