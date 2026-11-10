@@ -134,14 +134,30 @@ class PaletteTests(unittest.TestCase):
 
     def test_repository_names_follow_convention(self):
         self.assertTrue(all(name.endswith("-apollo-theme") for name in REPOSITORIES))
-        self.assertEqual(17, len(REPOSITORIES))
+        self.assertEqual(13, len(REPOSITORIES))
         self.assertEqual(len(REPOSITORIES), len(set(REPOSITORIES)))
         self.assertEqual(set(REPOSITORIES), set(APP_METADATA))
         self.assertEqual({"apollo-theme.github.io", ".github/organization"}, set(MANAGEMENT_REPOSITORIES))
 
+    def test_retired_integrations_are_absent_from_public_surfaces(self):
+        retired = ("wezterm", "iterm2", "apple-terminal", "alacritty")
+        surfaces = (
+            ROOT / ".gitmodules",
+            ROOT / "README.md",
+            ROOT / ".github" / "organization" / "profile" / "README.md",
+            ROOT / "apollo-theme.github.io" / "index.html",
+            ROOT / "apollo-theme.github.io" / "README.md",
+        )
+        for slug in retired:
+            self.assertNotIn(f"{slug}-apollo-theme", REPOSITORIES)
+            self.assertFalse((ROOT / "apollo-theme.github.io" / "previews" / f"{slug}.svg").exists())
+            for surface in surfaces:
+                with self.subTest(slug=slug, surface=surface.name):
+                    self.assertNotIn(f"{slug}-apollo-theme", surface.read_text(encoding="utf-8"))
+
     def test_app_preview_slugs_are_stable_and_unique(self):
         slugs = [metadata["slug"] for metadata in APP_METADATA.values()]
-        self.assertEqual(17, len(slugs))
+        self.assertEqual(13, len(slugs))
         self.assertEqual(len(slugs), len(set(slugs)))
         self.assertTrue(all(slug and " " not in slug for slug in slugs))
 
@@ -511,6 +527,7 @@ Apollo Dark after unmatched close
             "one night palette",
             "viewport pass pending",
             "17 previews verified",
+            "34 previews verified",
         )
         readmes = {name: path.read_text(encoding="utf-8") for name, path in surfaces.items()}
 
@@ -628,7 +645,7 @@ open -a SonicTerm
         )
         self.assertEqual(
             ["sonicterm"],
-            forbidden_identity_terms("wezterm-apollo-theme", "SonicTerm theme"),
+            forbidden_identity_terms("vim-apollo-theme", "SonicTerm theme"),
         )
 
     def test_package_metadata_uses_apollo_only_identity(self):

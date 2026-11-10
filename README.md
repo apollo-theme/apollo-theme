@@ -5,7 +5,7 @@
 **Two appearances. One color system. Every tool that matters.**
 
 [![Preview](https://img.shields.io/badge/preview-live-fabd2f?style=for-the-badge&labelColor=141617)](https://apollo-theme.github.io/)
-[![Integrations](https://img.shields.io/badge/integrations-17-d5c4a1?style=for-the-badge&labelColor=141617)](#integrations)
+[![Integrations](https://img.shields.io/badge/integrations-13-d5c4a1?style=for-the-badge&labelColor=141617)](#integrations)
 [![Appearances](https://img.shields.io/badge/appearances-dark%20%2B%20light-8a5200?style=for-the-badge&labelColor=f9f5d7)](#signal-palettes)
 [![CI](https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=for-the-badge&label=build&labelColor=141617)](https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/apollo-theme/apollo-theme?style=for-the-badge&labelColor=141617&color=83a598)](https://github.com/apollo-theme/apollo-theme/releases/latest)
@@ -22,7 +22,7 @@
 </tr>
 </table>
 
-*Simulated previews — explore Apollo Dark and Apollo Light across all 17 integrations.*
+*Simulated previews — explore Apollo Dark and Apollo Light across all 13 integrations.*
 
 </div>
 
@@ -41,7 +41,7 @@ The machine-readable sources are [`palette/apollo.json`](palette/apollo.json) an
 
 | Flight deck | Applications |
 | --- | --- |
-| **Terminals** | [SonicTerm](sonicterm-apollo-theme) · [WezTerm](wezterm-apollo-theme) · [iTerm2](iterm2-apollo-theme) · [Apple Terminal](apple-terminal-apollo-theme) · [Alacritty](alacritty-apollo-theme) · [Windows Terminal](windows-terminal-apollo-theme) |
+| **Terminals** | [SonicTerm](sonicterm-apollo-theme) · [Windows Terminal](windows-terminal-apollo-theme) |
 | **Editors & IDEs** | [Visual Studio Code](vscode-apollo-theme) · [Visual Studio](visual-studio-apollo-theme) · [Vim](vim-apollo-theme) · [Neovim](nvim-apollo-theme) · [Xcode](xcode-apollo-theme) |
 | **Shell & CLI** | [PowerShell](powershell-apollo-theme) · [tmux](tmux-apollo-theme) · [RMUX](rmux-apollo-theme) · [bat](bat-apollo-theme) · [eza](eza-apollo-theme) |
 | **Browser** | [Firefox](firefox-apollo-theme) |
@@ -73,7 +73,7 @@ git submodule update --init --recursive
 
 ## Repository map
 
-The 17 `*-apollo-theme/` paths are application repositories. Two management repositories are also synchronized here:
+The 13 `*-apollo-theme/` paths are application repositories. Two management repositories are also synchronized here:
 
 - [`apollo-theme.github.io/`](apollo-theme.github.io) — organization website and preview SVG source.
 - [`.github/organization/`](.github/organization/profile/README.md) — the single-file GitHub organization profile repository.

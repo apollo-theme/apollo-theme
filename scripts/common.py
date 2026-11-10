@@ -15,10 +15,6 @@ HEX_COLOR = re.compile(r"^#[0-9a-f]{6}$")
 
 LIGHT_ARTIFACTS = {
     "sonicterm-apollo-theme": "apollo-light.toml",
-    "wezterm-apollo-theme": "apollo-light.toml",
-    "iterm2-apollo-theme": "Apollo Light.itermcolors",
-    "apple-terminal-apollo-theme": "Apollo Light.terminal",
-    "alacritty-apollo-theme": "apollo-light.toml",
     "windows-terminal-apollo-theme": "apollo-light.json",
     "firefox-apollo-theme": "variants/light/manifest.json",
     "vscode-apollo-theme": "themes/apollo-light-color-theme.json",
@@ -35,10 +31,6 @@ LIGHT_ARTIFACTS = {
 
 APP_METADATA = {
     "sonicterm-apollo-theme": {"slug": "sonicterm", "name": "SonicTerm", "family": "terminal", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-SonicTerm%20%C2%B7%20cross--platform-", "install_anchor": "install", "description": "SonicTerm Apollo Theme — dark and light.", "topics": ("sonicterm", "terminal-emulator", "terminal-theme")},
-    "wezterm-apollo-theme": {"slug": "wezterm", "name": "WezTerm", "family": "terminal", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-WezTerm%20%C2%B7%20cross--platform-", "install_anchor": "install", "description": "WezTerm Apollo Theme — dark and light.", "topics": ("wezterm", "terminal-emulator", "terminal-theme")},
-    "iterm2-apollo-theme": {"slug": "iterm2", "name": "iTerm2", "family": "terminal", "workflow": "check.yml", "platform": "macOS", "badge_fragment": "target-iTerm2%20%C2%B7%20macOS-", "install_anchor": "install", "description": "iTerm2 Apollo Theme — dark and light.", "topics": ("iterm2", "macos", "terminal-theme")},
-    "apple-terminal-apollo-theme": {"slug": "apple-terminal", "name": "Apple Terminal", "family": "terminal", "workflow": "check.yml", "platform": "macOS", "badge_fragment": "target-Apple%20Terminal%20%C2%B7%20macOS-", "install_anchor": "install", "description": "Apple Terminal Apollo Theme — dark and light.", "topics": ("apple-terminal", "macos", "terminal-theme")},
-    "alacritty-apollo-theme": {"slug": "alacritty", "name": "Alacritty", "family": "terminal", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-Alacritty%20%C2%B7%20cross--platform-", "install_anchor": "install", "description": "Alacritty Apollo Theme — dark and light.", "topics": ("alacritty", "terminal-emulator", "terminal-theme")},
     "windows-terminal-apollo-theme": {"slug": "windows-terminal", "name": "Windows Terminal", "family": "terminal", "workflow": "ci.yml", "platform": "Windows", "badge_fragment": "target-Windows%20Terminal%20%C2%B7%20Windows-", "install_anchor": "install", "description": "Windows Terminal Apollo Theme — dark and light.", "topics": ("windows-terminal", "windows", "terminal-theme")},
     "firefox-apollo-theme": {"slug": "firefox", "name": "Firefox", "family": "browser", "workflow": "ci.yml", "platform": "Browser", "badge_fragment": "Target-Firefox-", "install_anchor": "install-sign-and-uninstall", "description": "Firefox Apollo Theme — dark and light packages.", "topics": ("firefox", "firefox-theme", "browser-theme", "webextension")},
     "vscode-apollo-theme": {"slug": "vscode", "name": "Visual Studio Code", "family": "editor", "workflow": "ci.yml", "platform": "Cross-platform", "badge_fragment": "target-Visual%20Studio%20Code-", "install_anchor": "install", "description": "Visual Studio Code Apollo Theme — dark and light.", "topics": ("vscode", "visual-studio-code", "editor-theme")},
