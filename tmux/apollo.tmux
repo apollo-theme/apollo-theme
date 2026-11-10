@@ -1,0 +1,21 @@
+# Apollo for tmux
+# Generated from palette/apollo.json by scripts/generate.py; do not edit.
+# Theme options only: no prefix, bindings, commands, or shell behavior.
+
+set-option -g status-style "bg=#141617,fg=#cfbc97"
+set-option -g status-left-style "bg=#fabd2f,fg=#141617,bold"
+set-option -g status-right-style "bg=#141617,fg=#d5c4a1"
+set-window-option -g window-status-style "bg=#1d2021,fg=#928374"
+set-window-option -g window-status-current-style "bg=#83a598,fg=#141617,bold"
+set-window-option -g window-status-activity-style "bg=#1d2021,fg=#fb4934,bold"
+set-window-option -g window-status-bell-style "bg=#fb4934,fg=#141617,bold"
+set-option -g pane-border-style "fg=#3c3836"
+set-option -g pane-active-border-style "fg=#fabd2f"
+set-option -g display-panes-colour "#83a598"
+set-option -g display-panes-active-colour "#fabd2f"
+set-option -g message-style "bg=#fabd2f,fg=#141617,bold"
+set-option -g message-command-style "bg=#83a598,fg=#141617,bold"
+set-window-option -g mode-style "bg=#fabd2f,fg=#141617,bold"
+set-window-option -g copy-mode-match-style "bg=#8ec07c,fg=#141617"
+set-window-option -g copy-mode-current-match-style "bg=#d3869b,fg=#141617,bold"
+set-window-option -g clock-mode-colour "#fabd2f"
