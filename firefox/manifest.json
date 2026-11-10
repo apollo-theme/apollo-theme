@@ -1,0 +1,56 @@
+{
+  "manifest_version": 2,
+  "version": "1.1.1",
+  "name": "Apollo Theme",
+  "description": "A high-contrast Firefox theme generated from the canonical Apollo palette.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "humble-apollo@d0n9x1n",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "theme": {
+    "colors": {
+      "frame": "#141617",
+      "frame_inactive": "#141617",
+      "tab_background_text": "#928374",
+      "tab_selected": "#1d2021",
+      "tab_text": "#cfbc97",
+      "tab_line": "#fabd2f",
+      "tab_loading": "#fabd2f",
+      "tab_background_separator": "#3c3836",
+      "toolbar": "#1d2021",
+      "toolbar_text": "#cfbc97",
+      "toolbar_field": "#141617",
+      "toolbar_field_text": "#cfbc97",
+      "toolbar_field_focus": "#1d2021",
+      "toolbar_field_text_focus": "#d5c4a1",
+      "toolbar_field_border_focus": "#fabd2f",
+      "toolbar_field_separator": "#3c3836",
+      "toolbar_vertical_separator": "#3c3836",
+      "toolbar_field_highlight": "#3c3836",
+      "toolbar_field_highlight_text": "#d5c4a1",
+      "button_background_hover": "#3c3836",
+      "button_background_active": "#665c54",
+      "icons": "#cfbc97",
+      "icons_attention": "#fabd2f",
+      "ntp_background": "#141617",
+      "ntp_text": "#cfbc97",
+      "popup": "#1d2021",
+      "popup_border": "#3c3836",
+      "popup_highlight": "#3c3836",
+      "popup_highlight_text": "#d5c4a1",
+      "popup_text": "#cfbc97",
+      "sidebar": "#1d2021",
+      "sidebar_border": "#3c3836",
+      "sidebar_highlight": "#3c3836",
+      "sidebar_highlight_text": "#d5c4a1",
+      "sidebar_text": "#cfbc97",
+      "bookmark_text": "#cfbc97"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+web-ext-artifacts/
+*.xpi
+*.zip
+.DS_Store
+node_modules/
+.npm-cache/
+__pycache__/
+*.py[cod]
