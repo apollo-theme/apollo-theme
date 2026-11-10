@@ -15,7 +15,7 @@ MIGRATION_LINE = "_Migrated from `apollo-theme/{repo}` on 2026-11-09; the origin
 # allowlist may grow only in the commit that edits that file.
 COMMON_ALLOW = ("README.md", "CLAUDE.md", ".github/*", ".gitattributes")
 ALLOWLIST = {
-    "firefox": ("package.json",),
+    "firefox": ("package.json", "tests/test_theme.py"),
     "vscode": ("package.json", "scripts/check.py"),
     "powershell": ("ApolloTheme.psd1", "scripts/generate.py"),
     "wezterm": ("apollo.toml", "apollo-light.toml", "scripts/generate.py", "scripts/check.py"),
