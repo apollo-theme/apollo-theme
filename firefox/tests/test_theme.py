@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
-import re
 import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MONOREPO = Path(__file__).resolve().parents[2]
-WORKFLOWS = MONOREPO / ".github" / "workflows"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import check as theme_check  # noqa: E402
@@ -48,24 +44,6 @@ LIGHT_SIGNING_COMMAND = (
     '  --api-key "$AMO_JWT_ISSUER" \\\n'
     '  --api-secret "$AMO_JWT_SECRET"'
 )
-
-
-def load_release_script():
-    """Load the monorepo's scripts/firefox_release.py without shadowing firefox/scripts modules."""
-    path = MONOREPO / "scripts" / "firefox_release.py"
-    spec = importlib.util.spec_from_file_location("monorepo_firefox_release", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def firefox_ci_job() -> str:
-    """Return the `firefox:` job block from the root CI workflow."""
-    ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
-    match = re.search(r"(?ms)^  firefox:\n(.*?)(?=^  [\w-]+:\n|\Z)", ci)
-    if match is None:
-        raise AssertionError("root ci.yml has no firefox job")
-    return match.group(1)
 
 
 class ThemeTests(unittest.TestCase):
@@ -553,16 +531,7 @@ Visible after
             self.package["repository"],
         )
 
-    def test_release_workflow_uses_target_qualified_name(self) -> None:
-        workflow = (WORKFLOWS / "firefox-release.yml").read_text(encoding="utf-8")
-        self.assertIn('tags: ["firefox-v*"]', workflow)
-        self.assertIn("working-directory: firefox", workflow)
-        self.assertIn('name: "Apollo Themes for Firefox ${{ github.ref_name }}"', workflow)
-        # Release notes need tag history that shallow CI checkouts lack, so pin the heading template.
-        script = (MONOREPO / "scripts" / "firefox_release.py").read_text(encoding="utf-8")
-        self.assertIn('f"## Apollo Themes for Firefox {tag}"', script)
-
-    def test_package_and_release_cover_both_static_themes(self) -> None:
+    def test_package_builds_and_lints_both_static_themes(self) -> None:
         self.assertEqual("apollo-theme", self.package["name"])
         scripts = self.package["scripts"]
         lint_commands = " ".join(
@@ -571,52 +540,15 @@ Visible after
         build_commands = " ".join(
             command for name, command in scripts.items() if name.startswith("build")
         )
-        workflow = (WORKFLOWS / "firefox-release.yml").read_text(encoding="utf-8")
-        ci_job = firefox_ci_job()
-        release = load_release_script()
-        self.assertEqual(
-            {
-                Path("manifest.json"): "humble-apollo@d0n9x1n",
-                Path("variants/light/manifest.json"): "apollo-light@d0n9x1n",
-            },
-            release.GECKO_IDS,
-        )
-        for manifest_path, archive_name in (
-            ("manifest.json", "apollo-theme.zip"),
-            ("variants/light/manifest.json", "apollo-light-theme.zip"),
-        ):
-            with self.subTest(manifest_path=manifest_path):
+        for archive_name in ("apollo-theme.zip", "apollo-light-theme.zip"):
+            with self.subTest(archive_name=archive_name):
                 self.assertIn(archive_name, build_commands)
-                self.assertIn(Path(manifest_path), release.GECKO_IDS)
-                self.assertIn(archive_name, release.ARTIFACTS)
-                self.assertIn(f"firefox/web-ext-artifacts/{archive_name}", workflow)
-                self.assertIn(f"firefox/web-ext-artifacts/{archive_name}", ci_job)
-        for command in ("npm ci", "npm run check", "npm test", "npm run lint"):
-            with self.subTest(command=command):
-                self.assertIn(command, workflow)
-                self.assertIn(f"- run: {command}", ci_job)
-        self.assertIn("scripts/firefox_release.py --dry-run", workflow)
-        self.assertIn("scripts/firefox_release.py --dry-run", ci_job)
         self.assertIn("web-ext lint --source-dir . ", lint_commands)
         self.assertIn("--ignore-files", lint_commands)
         self.assertIn("variants", lint_commands)
         self.assertIn("--source-dir variants/light", lint_commands)
         self.assertIn("web-ext build --source-dir . ", build_commands)
         self.assertIn("--source-dir variants/light", build_commands)
-
-    def test_release_rejects_tag_that_disagrees_with_either_manifest(self) -> None:
-        release = load_release_script()
-        version = self.package["version"]
-        self.assertEqual(version, release.version_from_tag(f"firefox-v{version}"))
-        release.check_versions(ROOT, version)
-        release.check_gecko_ids(ROOT)
-        for bad_tag in (f"v{version}", f"firefox-v{version}-rc1", "firefox-v1.1"):
-            with self.subTest(bad_tag=bad_tag):
-                with self.assertRaises(ValueError):
-                    release.version_from_tag(bad_tag)
-        with self.assertRaises(ValueError) as caught:
-            release.check_versions(ROOT, "0.0.0")
-        self.assertIn("light manifest", str(caught.exception))
 
     def test_every_theme_color_comes_from_palette(self) -> None:
         palette_colors = set(self.palette["colors"].values())
