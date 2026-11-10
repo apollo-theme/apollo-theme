@@ -2,7 +2,7 @@
 
 ## Project
 
-This repository contains **Apollo Theme** and **Apollo Light Theme** for Firefox, two separately installable static Firefox WebExtension themes using Manifest V2. There is no runtime JavaScript, background process, CSS, network access, or persistent state. Firefox renders browser chrome from each manifest's `theme.colors` object; static Firefox themes cannot bundle two themes in one manifest.
+This app lives at `firefox/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot, generates and checks standalone from this folder (its release tests read root workflow and release-script files, so `npm test` needs the monorepo checkout), and is validated by the root CI job `firefox`. It contains **Apollo Theme** and **Apollo Light Theme** for Firefox, two separately installable static Firefox WebExtension themes using Manifest V2. There is no runtime JavaScript, background process, CSS, network access, or persistent state. Firefox renders browser chrome from each manifest's `theme.colors` object; static Firefox themes cannot bundle two themes in one manifest.
 
 Both manifests are deterministic generated output. The implementation is:
 
@@ -10,9 +10,9 @@ Both manifests are deterministic generated output. The implementation is:
 - `scripts/common.py`: variant specs, Firefox role mappings, stable identities, palette hashes, and contrast helpers.
 - `scripts/generate.py`: generates `manifest.json` and `variants/light/manifest.json`; `--check` detects drift without writing.
 - `scripts/check.py`: validates both snapshot hashes, palette membership, text contrast, restricted colors, accents, and generated output.
-- `tests/test_theme.py`: focused stdlib-only regression tests.
+- `tests/test_theme.py`: focused stdlib-only regression tests. The release tests also read the monorepo's root `.github/workflows/ci.yml` (`firefox` job), `.github/workflows/firefox-release.yml`, and `scripts/firefox_release.py`.
 
-The npm package is `apollo-theme`; the repository remains `firefox-apollo-theme` at `https://github.com/apollo-theme/firefox-apollo-theme`. The display names are `Apollo Theme` and `Apollo Light Theme`.
+The npm package is `apollo-theme`; `package.json` `repository` points at `https://github.com/apollo-theme/apollo-theme.git` with `directory: firefox`. The display names are `Apollo Theme` and `Apollo Light Theme`.
 
 ## Immutable compatibility identity
 
@@ -22,7 +22,7 @@ Preserve `browser_specific_settings.gecko.data_collection_permissions.required =
 
 ## Commands
 
-Run from the repository root:
+Run from `firefox/`:
 
 ```sh
 npm ci                                      # exact Node dependencies
@@ -71,6 +71,6 @@ Manifest V2 does not provide general error, warning, success, or information rol
 
 ## Packaging and release
 
-Package metadata and both manifest versions must match. The release workflow also requires a tag `v<version>` matching all three values. `npm run build` creates separate dark and light ZIPs, each containing only its own manifest. ZIP and XPI artifacts are ignored and must not be committed. CI and release workflows use `npm ci` and the committed lockfile.
+Package metadata and both manifest versions must match. Releases are tagged `firefox-vX.Y.Z` on the monorepo and built by the root `.github/workflows/firefox-release.yml`, which runs the root `scripts/firefox_release.py` to require the tag version to match all three values and both Gecko GUIDs to be unchanged. Users install the unsigned ZIPs from `https://github.com/apollo-theme/apollo-theme/releases?q=firefox-v`. `npm run build` creates separate dark and light ZIPs, each containing only its own manifest. ZIP and XPI artifacts are ignored and must not be committed. CI and release workflows use `npm ci` and the committed lockfile.
 
-Permanent Firefox installation requires separate Mozilla signing for each identity. GitHub release ZIPs are unsigned and do not prove marketplace availability. Do not push, tag, create a release, transfer/rename GitHub resources, sign, or publish to AMO unless the maintainer explicitly requests that external action.
+Permanent Firefox installation requires separate Mozilla signing for each identity. GitHub release ZIPs are unsigned and do not prove marketplace availability. AMO publishing is not part of a release. Do not push, tag, create a release, transfer/rename GitHub resources, sign, or publish to AMO unless the maintainer explicitly requests that external action.

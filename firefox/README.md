@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-firefox"><img alt="Preview" src="https://img.shields.io/badge/Preview-Website-d3869b?style=flat-square&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/firefox-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/firefox-apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/firefox-apollo-theme/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/firefox-apollo-theme?sort=semver&amp;style=flat-square&amp;label=Release&amp;labelColor=141617&amp;color=b8bb26"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=firefox-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=firefox-v*&amp;display_name=tag&amp;sort=semver&amp;style=flat-square&amp;label=Release&amp;labelColor=141617&amp;color=b8bb26"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-b8bb26?style=flat-square&amp;labelColor=141617"></a>
   <a href="manifest.json"><img alt="Target Firefox" src="https://img.shields.io/badge/Target-Firefox-fb4934?style=flat-square&amp;labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical palette" src="https://img.shields.io/badge/palette-canonical-fabd2f?style=flat-square&amp;labelColor=141617"></a>
@@ -29,7 +29,7 @@
 
 **Apollo Dark** uses the official display name **Apollo Theme** and immutable Gecko GUID **humble-apollo@d0n9x1n**. **Apollo Light** uses the official display name **Apollo Light Theme** and Gecko GUID **apollo-light@d0n9x1n**.
 
-The npm package is `apollo-theme`; the repository remains `firefox-apollo-theme`. The dark Gecko GUID preserves upgrade continuity with public version 0.1.2. The light theme has a separate stable GUID because static Firefox themes cannot bundle two themes in one manifest.
+The npm package is `apollo-theme`; the source lives in the `firefox/` folder of [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme/tree/main/firefox). The dark Gecko GUID preserves upgrade continuity with public version 0.1.2. The light theme has a separate stable GUID because static Firefox themes cannot bundle two themes in one manifest.
 
 ## Local preview
 
@@ -90,7 +90,7 @@ The committed `palette/apollo.json` and `palette/apollo-light.json` files are ex
 
 ## Install, sign, and uninstall
 
-The GitHub build and release artifacts are unsigned ZIPs for source distribution and inspection. They are not Mozilla-signed XPIs and cannot be installed permanently in standard Firefox. Do not rename an unsigned ZIP to XPI and expect Firefox to accept it.
+Download `apollo-theme.zip` (Apollo Dark) and `apollo-light-theme.zip` (Apollo Light) from the [Firefox releases](https://github.com/apollo-theme/apollo-theme/releases?q=firefox-v), tagged `firefox-vX.Y.Z`, or build them locally with `npm run build`. The GitHub build and release artifacts are unsigned ZIPs for source distribution and inspection. They are not Mozilla-signed XPIs and cannot be installed permanently in standard Firefox. Do not rename an unsigned ZIP to XPI and expect Firefox to accept it.
 
 Firefox requires a separately Mozilla-signed XPI for each theme's permanent installation. The dark GUID belongs to its existing AMO listing; the light GUID is a separate identity and must not be uploaded as a version of the dark listing. Build the relevant ZIP, then submit or sign that theme with its matching AMO identity and API credentials. The following commands document the separate source roots; do not run them without an intentional signing or publishing action.
 
@@ -128,7 +128,7 @@ Automated checks validate schema, palette membership, restricted text colors, an
 
 ## Release
 
-A `v*` tag runs `.github/workflows/release.yml`. The workflow uses `npm ci`, checks generated output and tests, lints both source roots, verifies the tag matches `package.json` and both manifests, builds, and attaches both ZIPs to a GitHub Release.
+A `firefox-vX.Y.Z` tag on the monorepo runs the root `.github/workflows/firefox-release.yml`. The workflow uses `npm ci` in `firefox/`, checks generated output and tests, lints both source roots, and runs the root `scripts/firefox_release.py`, which verifies the tag matches `package.json` and both manifests, verifies both Gecko GUIDs, builds, and writes release notes; both ZIPs are then attached to a GitHub Release.
 
 Before tagging, bump `package.json`, regenerate both manifests, and commit them together. External pushing, tagging, GitHub release creation, signing, and AMO submission are deliberate maintainer actions.
 
