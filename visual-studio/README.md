@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-visual-studio"><img alt="Preview" src="https://img.shields.io/badge/Preview-open-fabd2f?style=flat-square&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/visual-studio-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/visual-studio-apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;color=b8bb26&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/visual-studio-apollo-theme/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/apollo-theme/visual-studio-apollo-theme?style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;color=b8bb26&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=visual-studio-v"><img alt="Latest release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=visual-studio-v*&amp;display_name=tag&amp;sort=semver&amp;style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8ec07c?style=flat-square&amp;labelColor=141617"></a>
   <a href="https://visualstudio.microsoft.com/"><img alt="Target: Visual Studio 2022+" src="https://img.shields.io/badge/target-Visual%20Studio%202022%2B-d3869b?style=flat-square&amp;labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-fabd2f?style=flat-square&amp;labelColor=141617"></a>
@@ -18,7 +18,7 @@
 <p align="center"><sub><strong>Simulated preview.</strong> Application chrome and typography may vary; follow the visual checks below against the canonical palette.</sub></p>
 
 > [!IMPORTANT]
-> This repository ships native `themes/Apollo.vstheme` and `themes/Apollo Light.vstheme` sources and deliberately does **not** produce a VSIX. Use a temporary Color Theme Designer project to load either without inventing an unverified extension package.
+> This app folder ships native `themes/Apollo.vstheme` and `themes/Apollo Light.vstheme` sources and deliberately does **not** produce a VSIX. Use a temporary Color Theme Designer project to load either without inventing an unverified extension package.
 
 The public **Apollo Dark** variant keeps the existing unsuffixed identity in `themes/Apollo.vstheme`; **Apollo Light** keeps its existing light identity in `themes/Apollo Light.vstheme`.
 
@@ -31,9 +31,22 @@ The public **Apollo Dark** variant keeps the existing unsuffixed identity in `th
 
 ## Install
 
+Clone the Apollo Theme repository once; the command is safe to rerun (Git Bash or WSL on Windows):
+
+```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
+```
+
+The theme sources are then at `~/.config/apollo-theme/visual-studio/themes/Apollo.vstheme` (Apollo Dark) and `~/.config/apollo-theme/visual-studio/themes/Apollo Light.vstheme` (Apollo Light). To skip the clone, download a single file instead:
+
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/visual-studio/themes/Apollo.vstheme
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/visual-studio/themes/Apollo%20Light.vstheme
+
+Then load it through a temporary Color Theme Designer project:
+
 1. Install [Visual Studio Color Theme Designer 2022](https://marketplace.visualstudio.com/items?itemName=idex.colorthemedesigner2022).
 2. In Visual Studio 2022, create a temporary **VSTheme Project**.
-3. Close the generated theme editor, replace that project's generated `.vstheme` file with `themes/Apollo.vstheme` or `themes/Apollo Light.vstheme`, and reopen it from Solution Explorer.
+3. Close the generated theme editor, replace that project's generated `.vstheme` file with `~/.config/apollo-theme/visual-studio/themes/Apollo.vstheme` or `~/.config/apollo-theme/visual-studio/themes/Apollo Light.vstheme` (or the downloaded copy), and reopen it from Solution Explorer.
 4. Choose **Preview** for a temporary check or **Apply** to make that variant available to the IDE.
 
 The designer does not document a direct standalone-file import command. The temporary project is therefore required to load and apply this source `.vstheme` without fabricating a VSIX. Keep a backup/export of your previous environment settings if you want to restore custom colors exactly.
@@ -55,7 +68,7 @@ Open a C# solution and verify:
 
 ## Uninstall or restore
 
-Because this repository ships theme source rather than an installed extension, there is no Apollo entry in **Manage Extensions**. Select another color theme under **Tools > Options > Environment > General** to stop using Apollo, then delete the temporary VSTheme project if it is no longer needed.
+Because this app ships theme source rather than an installed extension, there is no Apollo entry in **Manage Extensions**. Select another color theme under **Tools > Options > Environment > General** to stop using Apollo, then delete the temporary VSTheme project if it is no longer needed.
 
 ## Develop and validate
 
