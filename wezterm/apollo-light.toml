@@ -1,0 +1,16 @@
+# Generated from palette/apollo-light.json by scripts/generate.py; do not edit.
+[colors]
+foreground = "#3c3836"
+background = "#f9f5d7"
+cursor_fg = "#f9f5d7"
+cursor_bg = "#8a5200"
+cursor_border = "#8a5200"
+selection_fg = "none"
+selection_bg = "rgba(235, 219, 178, 1)"
+ansi = ["#3c3836", "#9d0006", "#6b6700", "#8a5200", "#076678", "#8f3f71", "#356b4d", "#504945"]
+brights = ["#665c54", "#9d0006", "#6b6700", "#8a5200", "#076678", "#8f3f71", "#356b4d", "#282828"]
+
+[metadata]
+name = "Apollo Light"
+author = "D0n9X1n"
+origin_url = "https://github.com/apollo-theme/wezterm-apollo-theme"
