@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-xcode"><img alt="Preview" src="https://img.shields.io/badge/Preview-open-fabd2f?style=flat-square&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/xcode-apollo-theme/actions/workflows/check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/xcode-apollo-theme/check.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;color=b8bb26&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/xcode-apollo-theme/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/apollo-theme/xcode-apollo-theme?style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;color=b8bb26&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=xcode-v"><img alt="Latest Xcode release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=xcode-v&amp;style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8ec07c?style=flat-square&amp;labelColor=141617"></a>
   <a href="https://developer.apple.com/xcode/"><img alt="Target: Xcode 26" src="https://img.shields.io/badge/target-Xcode%2026-d3869b?style=flat-square&amp;labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-fabd2f?style=flat-square&amp;labelColor=141617"></a>
@@ -28,22 +28,26 @@ The public **Apollo Dark** variant keeps the existing unsuffixed identity in `Ap
 
 ## Install and activate
 
-Quit Xcode, then install the theme:
+Quit Xcode, clone the Apollo Theme repository once, then copy either theme or both:
 
 ```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
 mkdir -p ~/Library/Developer/Xcode/UserData/FontAndColorThemes
-cp Apollo.xccolortheme "Apollo Light.xccolortheme" ~/Library/Developer/Xcode/UserData/FontAndColorThemes/
+cp "$HOME/.config/apollo-theme/xcode/Apollo.xccolortheme" ~/Library/Developer/Xcode/UserData/FontAndColorThemes/
+cp "$HOME/.config/apollo-theme/xcode/Apollo Light.xccolortheme" ~/Library/Developer/Xcode/UserData/FontAndColorThemes/
 ```
 
-Open Xcode and select **Settings → Themes → Apollo** or **Apollo Light**. The file adds a color theme only; it does not edit Xcode preferences.
+Xcode reads the copies, so the clone can be deleted after copying if no other Apollo app uses it.
+
+Open Xcode and select **Settings → Themes → Apollo** (Apollo Dark) or **Apollo Light**. Each file adds a color theme only; it does not edit Xcode preferences.
 
 ## Visual verification
 
-Inspect Swift, Objective-C/C, strings, numbers, comments, documentation comments, types, functions, macros, and URLs. Also inspect the debugger console, selection, current line, insertion point, warnings, errors, and runtime issues. Apollo source should be `#cfbc97` on `#141617`; Apollo Light should be `#3c3836` on `#f9f5d7`. In both, verify comments, warnings/errors, markup, and debugger colors remain readable and semantically distinct.
+Inspect Swift, Objective-C/C, strings, numbers, comments, documentation comments, types, functions, macros, and URLs. Also inspect the debugger console, selection, current line, insertion point, warnings, errors, and runtime issues. Apollo Dark source should be `#cfbc97` on `#141617`; Apollo Light should be `#3c3836` on `#f9f5d7`. In both, verify comments, warnings/errors, markup, and debugger colors remain readable and semantically distinct.
 
 ## Uninstall
 
-Quit Xcode and remove the theme file:
+Quit Xcode and remove the copied theme files:
 
 ```sh
 rm ~/Library/Developer/Xcode/UserData/FontAndColorThemes/Apollo.xccolortheme \
@@ -54,9 +58,10 @@ Reopen Xcode and choose another theme if needed.
 
 ## Develop and validate
 
-Both committed themes are generated from their matching palette snapshots using only Python's standard library. Their 28 syntax roles mirror the installed Xcode 26 theme schema.
+This app lives in the [`xcode/`](https://github.com/apollo-theme/apollo-theme/tree/main/xcode) folder of the Apollo Theme repository. Both committed themes are generated from their matching palette snapshots using only Python's standard library. Their 28 syntax roles mirror the installed Xcode 26 theme schema.
 
 ```sh
+cd xcode
 python3 scripts/generate.py
 python3 scripts/generate.py --check
 python3 scripts/check.py

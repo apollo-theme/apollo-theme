@@ -1,8 +1,12 @@
 # Alacritty Apollo Themes
 
+## Location
+
+This app lives at `alacritty/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme/tree/main/alacritty). It keeps its own exact snapshots of the root palettes in `palette/`, runs standalone from this folder with only Python's standard library, and is validated by the root CI job `alacritty`. **Apollo Dark** is the public name for the unsuffixed `apollo.toml` compatibility fragment; **Apollo Light** uses `apollo-light.toml`.
+
 ## Architecture
 
-This standalone repository maps `palette/apollo.json` to existing dark `apollo.toml` and `palette/apollo-light.json` to additive `apollo-light.toml`. Dark artifact bytes, filename, and activation remain unchanged.
+This folder maps `palette/apollo.json` to existing dark `apollo.toml` and `palette/apollo-light.json` to additive `apollo-light.toml`. Dark artifact bytes, filename, and activation remain unchanged.
 
 `scripts/generate.py` uses an ordered two-output map while retaining pure `render(palette)` TOML serialization. Check mode rejects missing, stale, and unexpected root-level TOML artifacts. `scripts/check.py` validates both palette identities, appearances, selection semantics, exact native sections and mappings, ordered slots, and drift. Tests pin the exact light snapshot hash and exercise both variants.
 
@@ -10,17 +14,19 @@ Artifacts contain only `[colors.primary]`, `[colors.cursor]`, `[colors.selection
 
 ## Install and activate
 
-Copy one or both files to an Alacritty themes directory. Import exactly one: `apollo.toml` for existing dark Apollo or `apollo-light.toml` for Apollo Light. The existing dark import path must continue to select dark Apollo.
+Clone the repository once to `$HOME/.config/apollo-theme` (skip if it already exists), then copy one or both files from `$HOME/.config/apollo-theme/alacritty/` to an Alacritty themes directory; use full quoted source paths in docs. Import exactly one: `apollo.toml` for Apollo Dark or `apollo-light.toml` for Apollo Light. The existing dark import path must continue to select Apollo Dark.
 
 ## Uninstall
 
-Remove the active theme from `[general].import`, reload, then remove only the corresponding copied fragment. Scripts and tests must not make these preference changes.
+Remove the active theme from `[general].import`, reload, then remove only the corresponding copied fragment. Never remove the shared clone in uninstall steps. Scripts and tests must not make these preference changes.
 
 ## Visual check
 
 Inspect selected differently colored text, cursor text, and ANSI colors 0–15 with both variants. Verify `CellForeground` preservation, the `#141617` dark canvas, the `#f9f5d7` light canvas, and ordered normal/bright slots against each palette.
 
 ## Commands
+
+Run from `alacritty/`:
 
 ```sh
 # Build both fragments

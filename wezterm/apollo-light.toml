@@ -13,4 +13,4 @@ brights = ["#665c54", "#9d0006", "#6b6700", "#8a5200", "#076678", "#8f3f71", "#3
 [metadata]
 name = "Apollo Light"
 author = "D0n9X1n"
-origin_url = "https://github.com/apollo-theme/wezterm-apollo-theme"
+origin_url = "https://github.com/apollo-theme/apollo-theme/tree/main/wezterm"

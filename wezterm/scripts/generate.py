@@ -14,7 +14,7 @@ OUTPUTS = {
     ROOT / "apollo.toml": ROOT / "palette" / "apollo.json",
     ROOT / "apollo-light.toml": ROOT / "palette" / "apollo-light.json",
 }
-REPOSITORY_URL = "https://github.com/apollo-theme/wezterm-apollo-theme"
+REPOSITORY_URL = "https://github.com/apollo-theme/apollo-theme/tree/main/wezterm"
 
 
 def load_palette(path: Path) -> dict[str, Any]:
