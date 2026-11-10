@@ -21,7 +21,7 @@ HEX_COLOR = re.compile(r"^#[0-9a-f]{6}$")
 EXPECTED_TOP_LEVEL = {"schemaVersion", "id", "name", "description", "appearance", "colorSpace", "provenance", "colors", "roles", "terminal", "constraints"}
 EXPECTED_COLOR_KEYS = {"foreground", "background", "cursor_fg", "cursor_bg", "cursor_border", "selection_fg", "selection_bg", "ansi", "brights"}
 EXPECTED_METADATA_KEYS = {"name", "author", "origin_url"}
-REPOSITORY_URL = "https://github.com/apollo-theme/wezterm-apollo-theme"
+REPOSITORY_URL = "https://github.com/apollo-theme/apollo-theme/tree/main/wezterm"
 
 
 def require(condition: bool, message: str) -> None:
