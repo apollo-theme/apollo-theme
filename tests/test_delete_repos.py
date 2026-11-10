@@ -1,6 +1,8 @@
 import hashlib
 import json
+import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -60,6 +62,14 @@ def is_write(call) -> bool:
             return True
     return False
 
+
+
+def rmtree(path):
+    """shutil.rmtree that also clears read-only bits, which git sets on object files (Windows refuses to unlink them)."""
+    def retry(function, target, _info):
+        os.chmod(target, stat.S_IWRITE)
+        function(target)
+    shutil.rmtree(path, onerror=retry)
 
 class Crash(BaseException):
     """Simulates the process dying (kill -9, power loss) right after GitHub accepted the delete."""
@@ -197,7 +207,7 @@ class Base(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.fixture)
+        rmtree(cls.fixture)
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -212,7 +222,7 @@ class Base(unittest.TestCase):
         self.out: list[str] = []
 
     def tearDown(self):
-        shutil.rmtree(self.tmp)
+        rmtree(self.tmp)
 
     def fake(self, repos=TWO, **kwargs):
         fake = FakeGitHub(repos, ledger=self.ledger, **kwargs)
@@ -318,7 +328,7 @@ class LedgerTests(Base):
     def test_write_fsyncs_file_and_directory(self):
         with mock.patch("delete_repos.os.fsync", wraps=delete_repos.os.fsync) as fsync:
             write_ledger(self.ledger, [])
-        self.assertGreaterEqual(fsync.call_count, 2)
+        self.assertGreaterEqual(fsync.call_count, 1 if os.name == "nt" else 2)
         self.assertEqual({"version": 1, "entries": []}, json.loads(self.ledger.read_text()))
 
 

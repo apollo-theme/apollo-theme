@@ -130,6 +130,10 @@ def load_ledger(path: Path) -> list[dict]:
 
 
 def _fsync_dir(directory: Path) -> None:
+    # Directory fsync makes the rename durable on POSIX; Windows cannot open a directory and its
+    # replace is already metadata-journaled, so there is nothing to sync there.
+    if os.name == "nt":
+        return
     fd = os.open(directory, os.O_RDONLY)
     try:
         os.fsync(fd)
