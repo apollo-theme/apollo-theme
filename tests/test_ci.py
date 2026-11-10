@@ -39,6 +39,11 @@ class CiTests(unittest.TestCase):
     def test_smoke_requires_installed_apps(self):
         self.assertIn('APOLLO_SMOKE_REQUIRED: "1"', jobs()["smoke"])
 
+    def test_smoke_uses_preinstalled_pwsh(self):
+        smoke = jobs()["smoke"]
+        self.assertNotIn("--cask powershell", smoke)
+        self.assertIn("pwsh --version", smoke)
+
     def test_firefox_job_dry_runs_release(self):
         self.assertIn("firefox_release.py --dry-run firefox-v", jobs()["firefox"].replace('"', ""))
 

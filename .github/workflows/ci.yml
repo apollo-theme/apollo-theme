@@ -36,7 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install smoke-test applications
-        run: brew install vim neovim tmux rmux bat eza && brew install --cask powershell
+        run: brew install vim neovim tmux rmux bat eza
+      - name: Confirm preinstalled PowerShell
+        run: pwsh --version
       - run: python3 -m unittest tests.test_smoke_install -v
 
   sonicterm:
