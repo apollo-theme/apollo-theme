@@ -1,8 +1,10 @@
-# vim-apollo-theme
+# Vim Apollo Theme
+
+This app lives at `vim/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot and runs standalone; the root CI job `vim` validates it.
 
 ## Commands
 
-Run commands from this repository root.
+Run commands from this `vim/` folder (`cd vim && python3 scripts/generate.py --check && python3 -m unittest discover -s tests`).
 
 - Build: `python3 scripts/generate.py`
 - Generated-file drift check: `python3 scripts/generate.py --check`
@@ -22,4 +24,4 @@ Only Python's standard library is allowed for build and check scripts.
 - `tests/test_theme.py` guards snapshot identity, deterministic output, and obsolete colors.
 - `tests/headless.vim` verifies loading, GUI/256-color highlights, and terminal ANSI globals.
 
-Keep the repository standalone. Do not read a parent palette at build time, add runtime dependencies, or introduce editor-plugin-specific highlight groups.
+Keep this folder standalone. Do not read the root palette at build time, add runtime dependencies, or introduce editor-plugin-specific highlight groups.
