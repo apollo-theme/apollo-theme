@@ -1,6 +1,7 @@
 """Facts about the 2026-11-09 consolidation of the per-app repositories into this monorepo."""
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import tempfile
@@ -40,6 +41,7 @@ def _default_build_dir(name: str) -> Path:
 DEFAULT_BACKUP = _default_build_dir("org-backup-2026-11-09")
 DEFAULT_RETIRED = _default_build_dir("apollo-light-crlf-audit")
 APP_REPO = re.compile(r"^(?P<slug>.+)-apollo-theme$")
+INVENTORY = ROOT / "scripts" / "release_inventory.json"
 
 
 class MigrationError(Exception):
@@ -71,20 +73,76 @@ def version_key(tag: str) -> tuple:
     return tuple(int(part) for part in re.findall(r"\d+", tag)), tag
 
 
-def app_release_dirs(backup: Path) -> list[tuple[str, Path]]:
-    """``(slug, releases/<slug>-apollo-theme)`` for every backed-up app; unknown ``*-apollo-theme`` dirs fail."""
+class Problem(str):
+    """An inventory problem message; ``missing`` marks absent backup files (planning raises FileNotFoundError)."""
+
+    missing: bool = False
+
+    @classmethod
+    def absent(cls, message: str) -> "Problem":
+        problem = cls(message)
+        problem.missing = True
+        return problem
+
+
+def load_inventory(path: Path = INVENTORY) -> dict[str, dict[str, list[str]]]:
+    """``{repo: {tag: [asset names]}}`` recorded from the live source repositories before migration."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    releases = data.get("releases") if isinstance(data, dict) else None
+    if not isinstance(releases, dict) or not releases:
+        raise ValueError(f"{path}: releases must be a non-empty object")
+    for repo, tags in releases.items():
+        if not isinstance(tags, dict):
+            raise ValueError(f"{path}: {repo} must map tags to asset lists")
+        for tag, assets in tags.items():
+            if not isinstance(assets, list) or not all(isinstance(name, str) for name in assets):
+                raise ValueError(f"{path}: {repo} {tag} assets must be a list of names")
+    return releases
+
+
+def inventory_problems(backup: Path, inventory: dict, repos=None, scan_unknown: bool = True) -> list[Problem]:
+    """Every inventory release must be in the backup (JSON, assets, files) and nothing else may be."""
     releases = Path(backup) / "releases"
-    if not releases.is_dir():
-        raise FileNotFoundError(f"missing release backup {releases}")
-    found = []
-    for directory in sorted(releases.iterdir()):
-        match = APP_REPO.match(directory.name)
-        if not directory.is_dir() or not match:
+    problems: list[Problem] = []
+    for repo in sorted(inventory if repos is None else repos):
+        if repo not in inventory:
+            problems.append(Problem(f"{repo}: not in release inventory"))
             continue
-        if match["slug"] not in SLUGS:
-            raise ValueError(f"unknown app release backup {directory}")
-        found.append((match["slug"], directory))
-    return found
+        directory = releases / repo
+        if not directory.is_dir():
+            problems.append(Problem.absent(f"{repo}: missing release backup {directory}"))
+            continue
+        for tag, names in sorted(inventory[repo].items(), key=lambda item: version_key(item[0])):
+            path = directory / f"{tag}.json"
+            if not path.is_file():
+                problems.append(Problem.absent(f"{repo}: backup {tag}.json missing"))
+                continue
+            try:
+                release = json.loads(path.read_text(encoding="utf-8"))
+                recorded_tag = release["tagName"]
+                recorded = sorted(asset["name"] for asset in release.get("assets", []))
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                problems.append(Problem(f"{repo}: backup {tag}.json unreadable: {error}"))
+                continue
+            if recorded_tag != tag:
+                problems.append(Problem(f"{repo}: backup {tag}.json records tag {recorded_tag}"))
+            if recorded != sorted(names):
+                problems.append(Problem(f"{repo}: backup {tag} assets differ from inventory"))
+            for name in sorted(names):
+                if not (directory / tag / name).is_file():
+                    problems.append(Problem.absent(f"{repo}: backup asset {tag}/{name} missing"))
+        for path in sorted(directory.glob("*.json")):
+            if path.stem not in inventory[repo]:
+                problems.append(Problem(f"{repo}: backup {path.name} not in inventory"))
+    if scan_unknown and releases.is_dir():
+        for directory in sorted(releases.iterdir()):
+            if directory.is_dir() and APP_REPO.match(directory.name) and directory.name not in inventory:
+                problems.append(Problem(f"{directory.name}: release backup not in inventory"))
+    return problems
+
+
+def normalize_body(body: str | None) -> str:
+    return (body or "").replace("\r\n", "\n").rstrip()
 
 
 def allow_for(slug: str) -> tuple:

@@ -19,14 +19,18 @@ from pathlib import Path
 
 from common import ROOT, SLUGS
 from migration import (
+    APP_REPO,
     DEFAULT_BACKUP,
     DEFAULT_RETIRED,
+    INVENTORY,
     RETIRED,
     MigrationError,
     Source,
     bundle_source,
-    app_release_dirs,
+    inventory_problems,
+    load_inventory,
     migrated_body,
+    normalize_body,
     release_title,
     source_for,
     version_key,
@@ -199,7 +203,7 @@ def normalize(release: dict, download=None) -> dict:
         else:
             raise ValueError(f"asset {asset.get('name')} has no digest and no downloader")
         assets.append((asset["name"], asset["size"], sha256))
-    body = (release.get("body") or "").replace("\r\n", "\n").rstrip()
+    body = normalize_body(release.get("body"))
     return {
         "tag": release["tagName"] if "tagName" in release else release["tag_name"],
         "name": release.get("name") or "",
@@ -298,35 +302,41 @@ def gh_release_asset(tag: str, name: str) -> bytes:
 
 def _check_restored(slug: str, directory: Path, tag: str, live: dict, download) -> list[str]:
     """One backed-up app release against its restored ``<slug>-<tag>`` monorepo release."""
-    path = directory / f"{tag}.json"
-    release = json.loads(path.read_text(encoding="utf-8"))
     restored = f"{slug}-{tag}"
+    path = directory / f"{tag}.json"
+    if not path.is_file():  # reported by inventory_problems; still require the live release
+        return [] if restored in live else [f"{restored}: release missing"]
+    release = json.loads(path.read_text(encoding="utf-8"))
     errors = check_backup_assets(directory.name, tag, release, directory / tag)
     if restored not in live:
         return errors + [f"{restored}: release missing"]
+    current = live[restored]
     expected = normalize(
         dict(release, tagName=restored, name=release_title(slug, tag, release.get("name") or ""),
              body=migrated_body(release.get("body") or "", directory.name)),
         _local_asset(directory / tag),
     )
-    actual = normalize(live[restored], lambda asset: download(restored, asset["name"]))
-    if actual == expected:
-        return errors
-    if actual["name"] != expected["name"]:
-        errors.append(f"{restored}: title differs")
-    if actual["body"] != expected["body"]:
-        errors.append(f"{restored}: body differs")
-    want = {name: (size, sha) for name, size, sha in expected["assets"]}
-    have = {name: (size, sha) for name, size, sha in actual["assets"]}
-    for name in sorted(want):
-        if name not in have:
-            errors.append(f"{restored}: {name} missing")
-            continue
-        if have[name][0] != want[name][0]:
-            errors.append(f"{restored}: {name} size differs")
-        if have[name][1] != want[name][1]:
-            errors.append(f"{restored}: {name} sha256 differs")
-    errors += [f"{restored}: {name} unexpected" for name in sorted(set(have) - set(want))]
+    actual = normalize(current, lambda asset: download(restored, asset["name"]))
+    if actual != expected:
+        if actual["name"] != expected["name"]:
+            errors.append(f"{restored}: title differs")
+        if actual["body"] != expected["body"]:
+            errors.append(f"{restored}: body differs")
+        want = {name: (size, sha) for name, size, sha in expected["assets"]}
+        have = {name: (size, sha) for name, size, sha in actual["assets"]}
+        for name in sorted(want):
+            if name not in have:
+                errors.append(f"{restored}: {name} missing")
+                continue
+            if have[name][0] != want[name][0]:
+                errors.append(f"{restored}: {name} size differs")
+            if have[name][1] != want[name][1]:
+                errors.append(f"{restored}: {name} sha256 differs")
+        errors += [f"{restored}: {name} unexpected" for name in sorted(set(have) - set(want))]
+    if current.get("draft") is not False:
+        errors.append(f"{restored}: release is a draft")
+    if bool(current.get("prerelease")) != bool(release.get("isPrerelease", False)):
+        errors.append(f"{restored}: prerelease differs")
     return errors
 
 
@@ -340,17 +350,17 @@ def _check_root_releases(backup: Path, live: dict, root: Path, remote_tags: dict
         bundle_tags = None
     for tag in ROOT_RELEASE_TAGS:
         path = backup / "releases" / "apollo-theme" / f"{tag}.json"
-        try:
-            original = normalize(json.loads(path.read_text(encoding="utf-8")))
-        except (OSError, ValueError, KeyError) as error:
-            errors.append(f"{tag}: backup unreadable: {error}")
-            continue
         if tag not in live:
             errors.append(f"{tag}: release missing")
-        else:
-            current = normalize(dict(live[tag], assets=[]))
-            if (current["name"], current["body"]) != (original["name"], original["body"]):
-                errors.append(f"{tag}: release changed")
+        elif path.is_file():  # a missing file is reported by inventory_problems
+            try:
+                original = normalize(json.loads(path.read_text(encoding="utf-8")))
+            except (OSError, ValueError, KeyError) as error:
+                errors.append(f"{tag}: backup unreadable: {error}")
+            else:
+                current = normalize(dict(live[tag], assets=[]))
+                if (current["name"], current["body"]) != (original["name"], original["body"]):
+                    errors.append(f"{tag}: release changed")
         if bundle_tags is None:
             continue
         expected = bundle_tags.get(tag)
@@ -373,14 +383,21 @@ def check_releases(
     remote_tags: dict | None = None,
     slugs: list[str] | None = None,
     include_root: bool | None = None,
+    inventory: dict | None = None,
 ) -> list[str]:
     """Restored app releases match the backup; the monorepo's own v0.1.0..v0.3.1 are unchanged.
 
-    ``slugs=None`` checks every backed-up app and, by default, the root releases. Retired apps are skipped.
+    The expected set is the frozen release inventory: every inventory tag and asset must be in the
+    backup, nothing outside it may be, and each must be live, published, and identical.
+    ``slugs=None`` checks every inventory app and, by default, the root releases. Retired apps are skipped.
     """
     backup = Path(backup)
     include_root = slugs is None if include_root is None else include_root
     errors: list[str] = []
+    try:
+        inventory = load_inventory() if inventory is None else inventory
+    except (OSError, ValueError) as error:
+        return [f"release inventory: {error}"]
     try:
         live = {}
         for release in api(f"repos/{MONOREPO}/releases"):
@@ -388,31 +405,40 @@ def check_releases(
     except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         return [f"releases: {type(error).__name__}: {error}"]
 
+    apps: list[tuple[str, str]] = []
     if slugs is None:
-        try:
-            apps = app_release_dirs(backup)
-        except (OSError, ValueError) as error:
-            return [f"releases: {error}"]
+        for repo in sorted(inventory):
+            match = APP_REPO.match(repo)
+            if not match:
+                continue
+            if match["slug"] not in SLUGS:
+                errors.append(f"{repo}: unknown app in release inventory")
+            elif match["slug"] not in RETIRED:
+                apps.append((match["slug"], repo))
     else:
-        apps = []
         for slug in slugs:
-            directory = backup / "releases" / f"{slug}-apollo-theme"
             if slug in RETIRED:
                 continue
-            if not directory.is_dir():
-                errors.append(f"{slug}: missing release backup {directory}")
+            repo = f"{slug}-apollo-theme"
+            if repo not in inventory:
+                errors.append(f"{slug}: not in release inventory")
                 continue
-            apps.append((slug, directory))
-    for slug, directory in apps:
-        if slug in RETIRED:
-            continue
-        for path in sorted(directory.glob("*.json"), key=lambda p: version_key(p.stem)):
+            apps.append((slug, repo))
+    checked = [repo for _, repo in apps] + (["apollo-theme"] if include_root else [])
+    if apps or include_root:
+        errors += inventory_problems(backup, inventory, repos=checked, scan_unknown=slugs is None)
+
+    for slug, repo in apps:
+        directory = backup / "releases" / repo
+        for tag in sorted(inventory[repo], key=version_key):
             try:
-                errors += _check_restored(slug, directory, path.stem, live, download)
+                errors += _check_restored(slug, directory, tag, live, download)
             except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
-                errors.append(f"{slug}-{path.stem}: {type(error).__name__}: {error}")
+                errors.append(f"{slug}-{tag}: {type(error).__name__}: {error}")
 
     if include_root:
+        if tuple(sorted(inventory.get("apollo-theme", {}), key=version_key)) != ROOT_RELEASE_TAGS:
+            errors.append("apollo-theme: inventory tags differ from v0.1.0..v0.3.1")
         if remote_tags is None:
             try:
                 remote_tags = parse_ls_remote(run_ls_remote("--tags", "origin"), peel=True)
@@ -420,7 +446,7 @@ def check_releases(
                 errors.append(f"origin: ls-remote --tags failed: {error}")
                 remote_tags = {}
         errors += _check_root_releases(backup, live, Path(root), remote_tags)
-    return errors
+    return [str(error) for error in dict.fromkeys(errors)]
 
 
 # CLI ----------------------------------------------------------------------
@@ -432,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offline", action="store_true", help="skip every network check")
     parser.add_argument("--backup", type=Path, default=DEFAULT_BACKUP, help="org backup directory with bundles and releases")
     parser.add_argument("--retired", type=Path, default=DEFAULT_RETIRED, help="directory of retired <slug>-apollo-theme clones")
+    parser.add_argument("--inventory", type=Path, default=INVENTORY, help="frozen release inventory JSON (online)")
     parser.add_argument("--live-source", metavar="REPO", help="check a live org repository against its backup (online)")
     args = parser.parse_args(argv)
     if args.offline and args.live_source:
@@ -458,7 +485,14 @@ def main(argv: list[str] | None = None) -> int:
     if slugs and not args.offline:
         errors += check_pushed(ROOT)
         errors += check_pin(ROOT)
-        errors += check_releases(args.backup, remote_tags=remote_tags, slugs=[args.app] if args.app else None)
+        try:
+            inventory = load_inventory(args.inventory)
+        except (OSError, ValueError) as error:
+            errors.append(f"release inventory: {error}")
+        else:
+            errors += check_releases(
+                args.backup, remote_tags=remote_tags, slugs=[args.app] if args.app else None, inventory=inventory
+            )
     if args.live_source:
         errors += check_live_source(args.live_source, args.backup)
 

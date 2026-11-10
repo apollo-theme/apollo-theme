@@ -1,0 +1,116 @@
+{
+  "recorded": "2026-11-10",
+  "source": "gh release list/view against the live apollo-theme repositories",
+  "releases": {
+    "bat-apollo-theme": {
+      "v0.1.0": [
+        "Apollo.tmTheme"
+      ],
+      "v0.1.1": [
+        "Apollo.tmTheme"
+      ],
+      "v0.2.0": []
+    },
+    "eza-apollo-theme": {
+      "v0.1.0": [
+        "theme.yml"
+      ],
+      "v0.2.0": []
+    },
+    "firefox-apollo-theme": {
+      "v0.1.0": [
+        "humble_apollo-0.1.0.zip"
+      ],
+      "v0.1.1": [
+        "humble_apollo-0.1.1.zip"
+      ],
+      "v0.1.2": [
+        "humble_apollo-0.1.2.zip"
+      ],
+      "v0.2.0": [
+        "firefox-apollo-theme.zip"
+      ],
+      "v1.0.0": [
+        "firefox-apollo-theme.zip"
+      ],
+      "v1.1.0": [
+        "firefox-apollo-light-theme.zip",
+        "firefox-apollo-theme.zip"
+      ],
+      "v1.1.1": [
+        "apollo-light-theme.zip",
+        "apollo-theme.zip"
+      ]
+    },
+    "nvim-apollo-theme": {
+      "v0.1.0": [],
+      "v0.2.0": []
+    },
+    "powershell-apollo-theme": {
+      "v0.1.0": [
+        "ApolloTheme.psm1"
+      ],
+      "v0.1.1": [
+        "ApolloTheme.profile.ps1",
+        "ApolloTheme.psd1",
+        "ApolloTheme.psm1"
+      ],
+      "v0.2.0": []
+    },
+    "rmux-apollo-theme": {
+      "v0.1.0": [
+        "apollo-rmux.conf"
+      ],
+      "v0.2.0": []
+    },
+    "sonicterm-apollo-theme": {
+      "v0.1.0": [
+        "apollo.toml"
+      ],
+      "v0.2.0": []
+    },
+    "tmux-apollo-theme": {
+      "v0.1.0": [
+        "apollo.tmux"
+      ],
+      "v0.2.0": []
+    },
+    "vim-apollo-theme": {
+      "v0.1.0": [
+        "apollo.vim"
+      ],
+      "v0.2.0": []
+    },
+    "visual-studio-apollo-theme": {
+      "v0.1.0": [
+        "Apollo.vstheme"
+      ],
+      "v0.2.0": []
+    },
+    "vscode-apollo-theme": {
+      "v0.1.0": [
+        "apollo-theme.vsix"
+      ],
+      "v0.2.0": []
+    },
+    "windows-terminal-apollo-theme": {
+      "v0.1.0": [
+        "apollo.json"
+      ],
+      "v0.2.0": []
+    },
+    "xcode-apollo-theme": {
+      "v0.1.0": [
+        "Apollo.xccolortheme"
+      ],
+      "v0.2.0": []
+    },
+    "apollo-theme": {
+      "v0.1.0": [],
+      "v0.1.1": [],
+      "v0.2.0": [],
+      "v0.3.0": [],
+      "v0.3.1": []
+    }
+  }
+}
