@@ -305,7 +305,7 @@ Visible style end.
 
     def test_documented_uninstall_preserves_unowned_or_modified_themes(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn('.installed-theme-hashes', readme)
+        self.assertIn('.apollo-theme-hashes', readme)
         self.assertIn('Apollo.tmTheme', readme)
         self.assertIn('Apollo Light.tmTheme', readme)
         self.assertIn('shasum -a 256', readme)
@@ -324,7 +324,7 @@ Visible style end.
             script = r'''
 clone_dir="$1"
 theme_dir="$2"
-marker="$clone_dir/.installed-theme-hashes"
+marker="$theme_dir/.apollo-theme-hashes"
 install() {
   installed=0
   mkdir -p "$theme_dir"

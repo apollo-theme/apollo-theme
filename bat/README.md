@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-bat"><img alt="Preview" src="https://img.shields.io/badge/status-Preview-fabd2f?style=flat-square&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/bat-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/bat-apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/bat-apollo-theme/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/bat-apollo-theme?display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=bat-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=bat-v&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-b8bb26?style=flat-square&labelColor=141617"></a>
   <a href="https://github.com/sharkdp/bat"><img alt="Theme for bat" src="https://img.shields.io/badge/app-bat-83a598?style=flat-square&labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=flat-square&labelColor=141617"></a>
@@ -19,15 +19,23 @@
 
 Apollo Dark preserves the existing `Apollo.tmTheme`, `BAT_THEME=Apollo`, and `Apollo` selector for compatibility. Apollo Light is its explicit light companion in `Apollo Light.tmTheme` and the `Apollo Light` selector. Both themes distinguish common syntax, markup, and diff scopes while leaving your bat configuration untouched until you explicitly select one.
 
+Source: <https://github.com/apollo-theme/apollo-theme/tree/main/bat>
+
 ## Install
 
-Clone the repository, then copy each theme only when that destination is unused. The ownership ledger records the name and exact installed hash of files this clone created; pre-existing themes are never overwritten or claimed:
+Clone the shared Apollo Theme checkout once; it is reused by every app that reads from `~/.config/apollo-theme`:
 
 ```sh
-git clone https://github.com/apollo-theme/bat-apollo-theme "$HOME/.config/bat-apollo-theme"
-clone_dir="$HOME/.config/bat-apollo-theme"
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
+```
+
+Then copy each theme only when that destination is unused. The ownership ledger in bat's themes directory records the name and exact installed hash of files this install created, so nothing is written inside the shared clone; pre-existing themes are never overwritten or claimed:
+
+<!-- smoke:install -->
+```sh
+clone_dir="$HOME/.config/apollo-theme/bat"
 theme_dir="$(bat --config-dir)/themes"
-marker="$clone_dir/.installed-theme-hashes"
+marker="$theme_dir/.apollo-theme-hashes"
 installed=0
 mkdir -p "$theme_dir"
 touch "$marker"
@@ -61,12 +69,12 @@ Or opt in for the current shell with `export BAT_THEME=Apollo` or `export BAT_TH
 
 ## Uninstall
 
-The uninstall guard considers only the two expected names recorded by this clone, and removes a file only if its current hash still matches the recorded installation hash. Pre-existing, unrecorded, moved, or modified themes are preserved. The cache is rebuilt once if at least one owned file is removed.
+The uninstall guard considers only the two expected names recorded by the install, and removes a file only if its current hash still matches the recorded installation hash. Pre-existing, unrecorded, moved, or modified themes are preserved. The cache is rebuilt once if at least one owned file is removed, and the ownership ledger is removed last.
 
+<!-- smoke:uninstall -->
 ```sh
-clone_dir="$HOME/.config/bat-apollo-theme"
 theme_dir="$(bat --config-dir)/themes"
-marker="$clone_dir/.installed-theme-hashes"
+marker="$theme_dir/.apollo-theme-hashes"
 removed=0
 if [ -f "$marker" ]; then
   while IFS="$(printf '\t')" read -r name expected_hash; do
@@ -86,9 +94,13 @@ if [ -f "$marker" ]; then
   done < "$marker"
 fi
 [ "$removed" -eq 0 ] || bat cache --build
+rm -f -- "$marker"
 unset BAT_THEME
-rm -rf "$clone_dir"
 ```
+
+## Remove the shared clone
+
+Vim, Neovim, tmux, RMUX, PowerShell, bat, and eza all read from `~/.config/apollo-theme`. Uninstall each of them first, then run `rm -rf "$HOME/.config/apollo-theme"`.
 
 ## Visual check
 
@@ -102,6 +114,8 @@ printf '%s\n' 'def hello(name):' '    return "hello " + name' |
 Use Apollo Light with a light terminal background. In either variant, syntax roles should remain distinct and readable.
 
 ## Development
+
+From the `bat/` folder of the monorepo:
 
 ```sh
 python3 scripts/generate.py --check
