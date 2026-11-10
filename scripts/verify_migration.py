@@ -10,6 +10,7 @@ import argparse
 import fnmatch
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import urllib.request
@@ -17,8 +18,11 @@ from pathlib import Path
 
 from common import ROOT, SLUGS
 from migration import MigrationError, Source, repo_name, source_for
+from sync_palette import PALETTE_FILES, PALETTE_REPOSITORY
 
 ORG = "apollo-theme"
+HEX40 = re.compile(r"^[0-9a-f]{40}$")
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _default_build_dir(name: str) -> Path:
@@ -44,7 +48,7 @@ def _failure(slug: str, result: subprocess.CompletedProcess, args: tuple) -> str
 
 
 def check_tree(root: Path, source: Source) -> list[str]:
-    args = ("diff", "--name-only", f"{source.rev}^{{tree}}", f"HEAD:{source.slug}")
+    args = ("diff", "--no-renames", "--name-only", f"{source.rev}^{{tree}}", f"HEAD:{source.slug}")
     result = _git(root, *args)
     if result.returncode != 0:
         return [_failure(source.slug, result, args)]
@@ -140,12 +144,32 @@ def check_pushed(root: Path, ls_remote=run_ls_remote) -> list[str]:
     return [] if remote == head.stdout.strip() else ["origin/main is not HEAD"]
 
 
+def _pin_shape_problem(pin) -> str | None:
+    """Reject a pin that would let check_pin verify less than both palettes at an exact commit."""
+    if not isinstance(pin, dict):
+        return "is not an object"
+    if pin.get("repository") != PALETTE_REPOSITORY:
+        return f"repository is not {PALETTE_REPOSITORY}"
+    if not isinstance(pin.get("commit"), str) or not HEX40.match(pin["commit"]):
+        return "commit is not a 40-hex SHA"
+    digests = pin.get("sha256")
+    if not isinstance(digests, dict) or set(digests) != set(PALETTE_FILES):
+        return f"sha256 keys are not exactly {', '.join(PALETTE_FILES)}"
+    for name in PALETTE_FILES:
+        if not isinstance(digests[name], str) or not HEX64.match(digests[name]):
+            return f"sha256 for {name} is not 64-hex"
+    return None
+
+
 def check_pin(root: Path, fetch_raw=gh_raw) -> list[str]:
     try:
         pin = json.loads((Path(root) / "palette" / "SOURCE.json").read_text(encoding="utf-8"))
-        commit, digests = pin["commit"], pin["sha256"]
-    except (OSError, ValueError, KeyError) as error:
+    except (OSError, ValueError) as error:
         return [f"palette/SOURCE.json unreadable: {error}"]
+    problem = _pin_shape_problem(pin)
+    if problem:
+        return [f"palette/SOURCE.json {problem}"]
+    commit, digests = pin["commit"], pin["sha256"]
     errors = []
     for name, expected in sorted(digests.items()):
         try:
@@ -189,6 +213,24 @@ def _local_asset(directory: Path):
     return read
 
 
+def check_backup_assets(repo: str, tag: str, release: dict, directory: Path) -> list[str]:
+    """Every asset in a backup release JSON exists locally with the recorded size and SHA-256."""
+    errors = []
+    for asset in release.get("assets", []):
+        label = f"{repo}: backup asset {tag}/{asset.get('name')}"
+        path = directory / str(asset.get("name"))
+        if not path.is_file():
+            errors.append(f"{label} missing")
+            continue
+        data = path.read_bytes()
+        if asset.get("size") != len(data):
+            errors.append(f"{label} size differs from JSON")
+        digest = asset.get("digest")
+        if digest and digest.removeprefix("sha256:") != hashlib.sha256(data).hexdigest():
+            errors.append(f"{label} sha256 differs from JSON")
+    return errors
+
+
 def check_live_source(repo: str, backup: Path, ls_remote=run_ls_remote, api=gh_api, download=download_asset) -> list[str]:
     """The live org repository still matches its backup bundle and release JSON."""
     backup = Path(backup)
@@ -198,6 +240,7 @@ def check_live_source(repo: str, backup: Path, ls_remote=run_ls_remote, api=gh_a
     releases_dir = backup / "releases" / repo
     if not releases_dir.is_dir():
         return [f"{repo}: missing release backup {releases_dir}"]
+    errors: list[str] = []
     try:
         heads = subprocess.run(
             ["git", "bundle", "list-heads", str(bundle)], check=True, capture_output=True, text=True
@@ -209,18 +252,21 @@ def check_live_source(repo: str, backup: Path, ls_remote=run_ls_remote, api=gh_a
         }
         live_refs = parse_ls_remote(ls_remote("--heads", "--tags", f"https://github.com/{ORG}/{repo}"))
         live_releases = api(f"repos/{ORG}/{repo}/releases")
+        backup_releases = {
+            path.stem: json.loads(path.read_text(encoding="utf-8")) for path in sorted(releases_dir.glob("*.json"))
+        }
+        for tag, release in backup_releases.items():
+            errors += check_backup_assets(repo, tag, release, releases_dir / tag)
         expected = {
-            path.stem: normalize(json.loads(path.read_text(encoding="utf-8")), _local_asset(releases_dir / path.stem))
-            for path in sorted(releases_dir.glob("*.json"))
+            tag: normalize(release, _local_asset(releases_dir / tag)) for tag, release in backup_releases.items()
         }
         live = {}
         for release in live_releases:
             view = normalize(release, download)
             live[view["tag"]] = view
     except (subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
-        return [f"{repo}: {type(error).__name__}: {error}"]
+        return errors + [f"{repo}: {type(error).__name__}: {error}"]
 
-    errors = []
     if live_refs != expected_refs:
         errors.append(f"{repo}: refs differ from bundle")
     for tag in sorted(expected):

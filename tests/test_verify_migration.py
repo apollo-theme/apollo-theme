@@ -157,6 +157,19 @@ class OfflineCheckTests(unittest.TestCase):
             git("commit", "-q", "-m", "drop a", cwd=mono)
             self.assertEqual(check_tree(mono, source), ["x: a.txt differs from source"])
 
+    def test_rename_into_allowlisted_directory_reports_original_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            src = make_source_repo(base)
+            bundle = base / "src.bundle"
+            git("bundle", "create", "-q", str(bundle), "--all", cwd=src)
+            mono = make_mono(base, bundle)
+            source = Source(slug="x", rev=git("rev-parse", "main", cwd=src), tags={}, allow=("README.md", ".github/*"))
+            (mono / "x" / ".github").mkdir()
+            git("mv", "x/a.txt", "x/.github/a.txt", cwd=mono)
+            git("commit", "-q", "-m", "hide a", cwd=mono)
+            self.assertEqual(check_tree(mono, source), ["x: a.txt differs from source"])
+
     def test_missing_tag_and_unrelated_history_fail(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
@@ -353,6 +366,37 @@ class LiveSourceTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertIn(("--heads", "--tags", "https://github.com/apollo-theme/.github"), self.calls)
 
+    def local_asset(self):
+        return self.backup / "releases" / "bat-apollo-theme" / "v0.1.0" / "Apollo.tmTheme"
+
+    def check(self):
+        return check_live_source("bat-apollo-theme", self.backup, ls_remote=self.ls_remote(), api=self.api([self.rest]))
+
+    def test_missing_backup_asset_fails(self):
+        self.local_asset().unlink()
+        self.assertEqual(self.check(), ["bat-apollo-theme: backup asset v0.1.0/Apollo.tmTheme missing"])
+
+    def test_corrupt_backup_asset_fails(self):
+        data = bytearray(self.local_asset().read_bytes())
+        data[0] ^= 0xFF
+        self.local_asset().write_bytes(bytes(data))
+        self.assertEqual(self.check(), ["bat-apollo-theme: backup asset v0.1.0/Apollo.tmTheme sha256 differs from JSON"])
+
+    def test_backup_asset_size_mismatch_fails(self):
+        self.local_asset().write_bytes(self.local_asset().read_bytes() + b"\n")
+        self.assertEqual(
+            self.check(),
+            [
+                "bat-apollo-theme: backup asset v0.1.0/Apollo.tmTheme size differs from JSON",
+                "bat-apollo-theme: backup asset v0.1.0/Apollo.tmTheme sha256 differs from JSON",
+            ],
+        )
+
+
+def write_pin(root: Path, pin: dict) -> None:
+    (root / "palette").mkdir(parents=True, exist_ok=True)
+    (root / "palette" / "SOURCE.json").write_text(json.dumps(pin), encoding="utf-8")
+
 
 class OnlineRootChecksTests(unittest.TestCase):
     def test_check_pushed(self):
@@ -377,6 +421,29 @@ class OnlineRootChecksTests(unittest.TestCase):
         self.assertIn(f"repos/apollo-theme/apollo-palette/contents/palette/apollo.json?ref={source['commit']}", paths)
         errors = check_pin(ROOT, fetch_raw=lambda path: b"tampered")
         self.assertEqual(len(errors), len(source["sha256"]))
+
+    def test_check_pin_rejects_malformed_pin_before_fetching(self):
+        good = json.loads((ROOT / "palette" / "SOURCE.json").read_text(encoding="utf-8"))
+        cases = {
+            "empty sha256": dict(good, sha256={}),
+            "one key missing": dict(good, sha256={"apollo.json": good["sha256"]["apollo.json"]}),
+            "extra key": dict(good, sha256=dict(good["sha256"], **{"other.json": "0" * 64})),
+            "non-hex value": dict(good, sha256=dict(good["sha256"], **{"apollo.json": "z" * 64})),
+            "short value": dict(good, sha256=dict(good["sha256"], **{"apollo.json": "0" * 63})),
+            "bad commit": dict(good, commit="24f6b2e"),
+            "wrong repository": dict(good, repository="https://github.com/someone/apollo-palette"),
+            "missing commit": {k: v for k, v in good.items() if k != "commit"},
+        }
+
+        def fetch(path):
+            raise AssertionError(f"fetched {path} for a malformed pin")
+
+        for label, pin in cases.items():
+            with self.subTest(label), tempfile.TemporaryDirectory() as directory:
+                write_pin(Path(directory), pin)
+                errors = check_pin(Path(directory), fetch_raw=fetch)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertTrue(errors[0].startswith("palette/SOURCE.json"), errors)
 
 
 class CliTests(unittest.TestCase):
