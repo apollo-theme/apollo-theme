@@ -1,8 +1,10 @@
-# nvim-apollo-theme
+# Neovim Apollo Theme
+
+This app lives at `nvim/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot and runs standalone; the root CI job `nvim` validates it.
 
 ## Commands
 
-Run commands from this repository root.
+Run commands from this `nvim/` folder (`cd nvim && python3 scripts/generate.py --check && python3 -m unittest discover -s tests`).
 
 - Build: `python3 scripts/generate.py`
 - Generated-file drift check: `python3 scripts/generate.py --check`
@@ -22,4 +24,4 @@ Only Python's standard library is allowed for build and check scripts.
 - `tests/test_theme.py` guards snapshot identity, deterministic output, and obsolete colors.
 - `tests/headless.lua` verifies loading, representative highlights, current Tree-sitter links, and terminal ANSI globals.
 
-Keep the repository standalone and plugin-neutral. Do not edit generated Lua directly, read a parent palette at build time, add runtime dependencies, or add deprecated Tree-sitter capture aliases.
+Keep this folder standalone and plugin-neutral. Do not edit generated Lua directly, read the root palette at build time, add runtime dependencies, or add deprecated Tree-sitter capture aliases.

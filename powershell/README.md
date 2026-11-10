@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-powershell"><img alt="Preview" src="https://img.shields.io/badge/status-Preview-fabd2f?style=flat-square&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/powershell-apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/powershell-apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/powershell-apollo-theme/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/powershell-apollo-theme?display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=powershell-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=powershell-v*&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-b8bb26?style=flat-square&labelColor=141617"></a>
   <a href="https://learn.microsoft.com/powershell/"><img alt="PowerShell 7.2 or newer" src="https://img.shields.io/badge/PowerShell-7.2%2B-83a598?style=flat-square&logo=powershell&logoColor=white&labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=flat-square&labelColor=141617"></a>
@@ -21,20 +21,27 @@ Apollo Dark remains the compatibility default for unsuffixed `Enable-ApolloTheme
 
 ## Install
 
-Clone the repository into a dedicated configuration directory:
+Apollo lives in the `powershell/` folder of [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). Clone it once into the shared location (this is a no-op when the clone already exists; on Windows run it from Git Bash or any POSIX shell):
 
-```powershell
-git clone https://github.com/apollo-theme/powershell-apollo-theme "$HOME/.config/powershell-apollo-theme"
+```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
 ```
 
-This only creates the clone; it does not edit `$PROFILE` or enable the theme.
+Cloning does not edit `$PROFILE`. To load Apollo Dark in every new session, append the import and activation lines to your profile:
+
+<!-- smoke:install -->
+```pwsh
+New-Item -ItemType Directory -Force (Split-Path $PROFILE) | Out-Null; Add-Content $PROFILE 'Import-Module "$HOME/.config/apollo-theme/powershell/ApolloTheme.psd1"', 'Enable-ApolloTheme -Variant Dark'
+```
+
+For Apollo Light, use `'Enable-ApolloTheme -Variant Light'` as the second line instead. Update later with `git -C "$HOME/.config/apollo-theme" pull`.
 
 ## Activate
 
-Import and enable either variant for the current session. Dark remains the default:
+To try either variant in the current session without touching your profile, import the module and enable a variant. Dark remains the default:
 
-```powershell
-Import-Module "$HOME/.config/powershell-apollo-theme/ApolloTheme.psd1" -Force
+```pwsh
+Import-Module "$HOME/.config/apollo-theme/powershell/ApolloTheme.psd1" -Force
 Enable-ApolloTheme                 # Dark compatibility default
 Enable-ApolloTheme -Variant Dark   # Explicit Dark
 Enable-ApolloTheme -Variant Light  # Explicit Light
@@ -42,19 +49,26 @@ Enable-ApolloTheme -Variant Light  # Explicit Light
 
 `Get-ApolloPSReadLineColors` accepts the same `-Variant Dark|Light` parameter. Apollo Light changes PSReadLine token colors only, so use it with a terminal profile that has a light background.
 
-To opt in for future sessions, manually dot-source `ApolloTheme.profile.ps1` from your PowerShell profile. The repository never writes that line for you.
-
 ## Restore and uninstall
 
-If you added the profile line, remove it first. Then restore the PSReadLine colors captured at first activation, unload the module, and remove the clone:
+Remove the Apollo lines from your profile:
 
-```powershell
-Disable-ApolloTheme
-Remove-Module ApolloTheme
-Remove-Item -Recurse -Force "$HOME/.config/powershell-apollo-theme"
+<!-- smoke:uninstall -->
+```pwsh
+Set-Content $PROFILE (Get-Content $PROFILE | Where-Object { $_ -notmatch 'ApolloTheme' })
+```
+
+In a session that is still running, restore the PSReadLine colors captured at first activation and unload the module:
+
+```pwsh
+Disable-ApolloTheme; Remove-Module ApolloTheme
 ```
 
 Repeated calls to `Enable-ApolloTheme` do not replace the saved pre-Apollo values, and calling `Disable-ApolloTheme` while inactive is safe. Apollo only sets color properties exposed by the installed PSReadLine version, so the PSReadLine bundled with PowerShell 7.2 works without newer list-prediction properties.
+
+## Remove the shared clone
+
+Vim, Neovim, tmux, RMUX, PowerShell, bat, and eza all read from `~/.config/apollo-theme`. Uninstall each of them first, then run `rm -rf "$HOME/.config/apollo-theme"`.
 
 ## Visual check
 
@@ -68,16 +82,17 @@ For Dark, commands should be gold, parameters magenta, variables cyan, strings g
 
 ## Development
 
-PowerShell 7 and PSReadLine are required for native assertions; no Pester dependency is used.
+PowerShell 7 and PSReadLine are required for native assertions; no Pester dependency is used. Run these from the `powershell/` folder of the monorepo:
 
-```powershell
-python scripts/generate.py --check
-python scripts/check.py
-python -m unittest discover -s tests -v
+```sh
+cd powershell
+python3 scripts/generate.py --check
+python3 scripts/check.py
+python3 -m unittest discover -s tests -v
 pwsh -NoLogo -NoProfile -NonInteractive -File tests/Test-ApolloTheme.ps1
 ```
 
-Generated module and profile files are deterministic. Make mapping changes in `scripts/generate.py`, then regenerate rather than editing generated output directly.
+Generated module and profile files are deterministic. Make mapping changes in `scripts/generate.py`, then regenerate rather than editing generated output directly. The root CI job `powershell` runs these checks on every change.
 
 ## License
 
