@@ -492,6 +492,9 @@ def check_readme_contract(slug: str, readme: str | None = None, *, claude: str |
         missing.append("license badge")
     if f"img.shields.io/badge/{app['badge_fragment']}".lower() not in lowered:
         missing.append("app or platform badge")
+    # GitHub's release search matches whole words, so a "?q=<slug>-v" link always shows no releases.
+    if re.search(r"/releases\?q=[a-z0-9-]+-v(?![a-z0-9])", "\n".join(public_metadata)):
+        missing.append("release search link by app name")
     prose = visible_prose(readme)
     appearance_names = ("Apollo Dark", "Apollo Light")
     missing_appearances = [

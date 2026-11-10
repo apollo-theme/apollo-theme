@@ -141,6 +141,14 @@ class ReadmeContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "release badge"):
             run("bat", exact)
 
+    def test_release_search_links_use_whole_words(self):
+        # GitHub's release search matches whole words, so a "-v" suffixed query finds nothing.
+        suffixed = "bat" + "-v"
+        broken = valid_readme("bat") + f'\n<a href="{MONOREPO}/releases?q={suffixed}">releases</a>\n'
+        with self.assertRaisesRegex(ValueError, "release search"):
+            run("bat", broken)
+        run("bat", valid_readme("bat") + f'\n<a href="{MONOREPO}/releases?q=bat">releases</a>\n')
+
     def test_license_link_must_be_local_or_monorepo_path(self):
         readme = valid_readme("bat")
         run("bat", readme.replace(f"{MONOREPO}/blob/main/bat/LICENSE", "LICENSE"))

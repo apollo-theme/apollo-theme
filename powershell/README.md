@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-powershell"><img alt="Preview" src="https://img.shields.io/badge/status-Preview-fabd2f?style=flat-square&labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&style=flat-square&label=CI&labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=powershell-v"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=powershell-v*&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=powershell"><img alt="Latest Release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=powershell-v*&display_name=tag&sort=semver&style=flat-square&label=Release&color=d3869b&labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-b8bb26?style=flat-square&labelColor=141617"></a>
   <a href="https://learn.microsoft.com/powershell/"><img alt="PowerShell 7.2 or newer" src="https://img.shields.io/badge/PowerShell-7.2%2B-83a598?style=flat-square&logo=powershell&logoColor=white&labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=flat-square&labelColor=141617"></a>

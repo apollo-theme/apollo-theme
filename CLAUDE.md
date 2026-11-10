@@ -14,7 +14,7 @@ This is the Apollo Theme monorepo, `apollo-theme/apollo-theme`. It is one of thr
 
 The 17 app folders are listed in `APPS` in `scripts/common.py`: `sonicterm`, `windows-terminal`, `firefox`, `vscode`, `visual-studio`, `vim`, `nvim`, `xcode`, `tmux`, `rmux`, `powershell`, `bat`, `eza`, `wezterm`, `iterm2`, `apple-terminal`, `alacritty`. They are ordinary tracked folders (no submodules). Each folder stays standalone: its own `README.md`, `CLAUDE.md`, `LICENSE`, exact Dark and Light palette snapshots, generator, checker, and tests, so `cd <slug> && python3 scripts/generate.py --check` works without the root scripts. Native artifacts and app semantics belong to that folder. Existing `Apollo` / `apollo` names and unsuffixed files always mean the dark compatibility variant; light uses `Apollo Light` / `apollo-light`.
 
-Vim, Neovim, tmux, RMUX, PowerShell, bat, and eza (`CLONE_APPS`) install from one shared clone at `~/.config/apollo-theme`, created by the idempotent line `[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"`. Copy and import apps take files from that clone, VS Code packages locally from it, and Firefox installs from `releases?q=firefox-v`. Keep app READMEs consistent with this model.
+Vim, Neovim, tmux, RMUX, PowerShell, bat, and eza (`CLONE_APPS`) install from one shared clone at `~/.config/apollo-theme`, created by the idempotent line `[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"`. Copy and import apps take files from that clone, VS Code packages locally from it, and Firefox installs from `releases?q=firefox`. Keep app READMEs consistent with this model.
 
 ## Palette flow
 

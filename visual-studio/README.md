@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-visual-studio"><img alt="Preview" src="https://img.shields.io/badge/Preview-open-fabd2f?style=flat-square&amp;labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;color=b8bb26&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=visual-studio-v"><img alt="Latest release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=visual-studio-v*&amp;display_name=tag&amp;sort=semver&amp;style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=visual-studio"><img alt="Latest release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=visual-studio-v*&amp;display_name=tag&amp;sort=semver&amp;style=flat-square&amp;label=Release&amp;color=83a598&amp;labelColor=141617"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8ec07c?style=flat-square&amp;labelColor=141617"></a>
   <a href="https://visualstudio.microsoft.com/"><img alt="Target: Visual Studio 2022+" src="https://img.shields.io/badge/target-Visual%20Studio%202022%2B-d3869b?style=flat-square&amp;labelColor=141617"></a>
   <a href="palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-fabd2f?style=flat-square&amp;labelColor=141617"></a>

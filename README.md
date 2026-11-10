@@ -68,7 +68,7 @@ Vim, Neovim, tmux, RMUX, PowerShell, bat, and eza read their theme straight from
 [ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
 ```
 
-Update every clone-based theme at once with `git -C ~/.config/apollo-theme pull --ff-only`. Copy and import apps (terminals, Xcode, Visual Studio) take their files from the same clone, Visual Studio Code is packaged locally from it, and Firefox builds are downloaded from the [Firefox releases](https://github.com/apollo-theme/apollo-theme/releases?q=firefox-v).
+Update every clone-based theme at once with `git -C ~/.config/apollo-theme pull --ff-only`. Copy and import apps (terminals, Xcode, Visual Studio) take their files from the same clone, Visual Studio Code is packaged locally from it, and Firefox builds are downloaded from the [Firefox releases](https://github.com/apollo-theme/apollo-theme/releases?q=firefox).
 
 ## Development
 
