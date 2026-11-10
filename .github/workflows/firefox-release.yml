@@ -1,0 +1,16 @@
+name: Firefox release
+on: { push: { tags: ["firefox-v*"] } }
+permissions: { contents: write }
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firefox } }
+    steps:
+      - { uses: actions/checkout@v4, with: { fetch-depth: 0 } }
+      - { uses: actions/setup-node@v4, with: { node-version: 20, cache: npm, cache-dependency-path: firefox/package-lock.json } }
+      - { uses: actions/setup-python@v5, with: { python-version: "3.11" } }
+      - run: npm ci && npm run check && npm test && npm run lint
+      - run: python3 ../scripts/firefox_release.py --dry-run "$GITHUB_REF_NAME" --notes-out RELEASE_NOTES.md
+      - uses: softprops/action-gh-release@v2
+        with: { name: "Apollo Themes for Firefox ${{ github.ref_name }}", body_path: firefox/RELEASE_NOTES.md, fail_on_unmatched_files: true,
+                files: "firefox/web-ext-artifacts/apollo-theme.zip\nfirefox/web-ext-artifacts/apollo-light-theme.zip" }
