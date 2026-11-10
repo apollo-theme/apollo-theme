@@ -448,6 +448,8 @@ For each slug not done in Task 14b: `git worktree add $W-$s -b docs/$s consolida
 ### Phase 5: deletion (only after Task 20b's verify exits 0)
 
 ### Task 21: Freeze, re-verify, delete 15 repositories, then clean up
+> **Superseded:** do not run the shell block below. Use `python3 scripts/delete_repos.py --dry-run`, then `--execute`; it adds the live-site gate, a validated write-ahead ledger, full bundle restoration, metadata export before and after archiving, and per-repository live-source verification.
+
 Freeze: remaining repos are archived first (reversible with `-F archived=false`); archived repos stay readable for `ls-remote`, release APIs, and downloads. Resumable through the ledger `$R/.build/deletion-ledger.json` (`[{repo, verified_and_deleted_at}]`). A rerun skips exactly the ledger repos after confirming they return 404; any 404 for a repo not in the ledger aborts. `set -e`: any failing gate aborts the whole script before later deletions, including `.github` and `demo-repository`.
 ```bash
 set -euo pipefail; cd $W; L=$R/.build/deletion-ledger.json; [ -f "$L" ] || echo '[]' > "$L"

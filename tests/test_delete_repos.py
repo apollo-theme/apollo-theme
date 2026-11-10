@@ -88,6 +88,7 @@ class FakeGitHub:
         self.ledger = ledger
         self.ledger_at_delete: dict = {}
         self.extra_listed: list = []
+        self.before_archive = None  # callable(repo) run just before a repo is archived
 
     @property
     def writes(self):
@@ -153,6 +154,8 @@ class FakeGitHub:
             return Result(1, "", "gh: Bad Gateway (HTTP 502)")
         if "-X" in args:
             assert args[args.index("-X") + 1] == "PATCH" and "archived=true" in args
+            if self.before_archive is not None:
+                self.before_archive(repo)
             state["archived"] = True
             return Result(0, json.dumps(self.repo_json(repo)), "")
         if not rest:
@@ -630,6 +633,26 @@ class MetadataTests(Base):
         with self.assertRaisesRegex(AbortError, "timeline"):
             self.deleter(fake).run()
         self.assertEqual([], fake.writes)
+
+    def test_metadata_added_before_freeze_is_archived_before_any_delete(self):
+        # Tech Lead race: an issue opened after the first export but before archival must not be lost.
+        fake = self.fake()
+        fake.before_archive = lambda repo: fake.add_issue(repo, number=7) if repo == "bat-apollo-theme" else None
+        self.deleter(fake).run()
+        issues = json.loads((self.backup / "metadata" / "bat-apollo-theme" / "issues.json").read_text(encoding="utf-8"))
+        self.assertIn(7, [issue["number"] for issue in issues])
+        refresh = [i for i, c in enumerate(fake.calls) if isinstance(c, list) and "repos/apollo-theme/bat-apollo-theme/issues?state=all&per_page=100" in c]
+        first_delete = fake.calls.index(fake.deletes()[0])
+        self.assertTrue(any(i < first_delete for i in refresh[1:]), "metadata must be re-exported after archive and before the first delete")
+
+    def test_metadata_refresh_failure_after_freeze_blocks_every_delete(self):
+        fake = self.fake()
+        def fail_after_archive(repo):
+            fake.fail_paths.add("repos/apollo-theme/.github/issues/1/timeline")
+        fake.before_archive = fail_after_archive
+        with self.assertRaisesRegex(AbortError, "timeline"):
+            self.deleter(fake).run()
+        self.assertEqual([], fake.deletes())
 
 
 if __name__ == "__main__":

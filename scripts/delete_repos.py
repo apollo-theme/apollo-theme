@@ -562,6 +562,10 @@ class Deleter:
             return
         self.out("f. archive")
         self.archive(todo)
+        # Metadata exported in step e could gain issues or comments before the archive froze it;
+        # re-export the frozen state so nothing created in between is lost on deletion.
+        self.out("f2. metadata re-export after freeze")
+        self.export(todo)
         self.out("g. full verify")
         self.verify()
         self.out("h. delete")
