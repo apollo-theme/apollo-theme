@@ -2,7 +2,7 @@
 
 ## Project
 
-This app lives at `firefox/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot, generates and checks standalone from this folder (its release tests read root workflow and release-script files, so `npm test` needs the monorepo checkout), and is validated by the root CI job `firefox`. It contains **Apollo Theme** and **Apollo Light Theme** for Firefox, two separately installable static Firefox WebExtension themes using Manifest V2. There is no runtime JavaScript, background process, CSS, network access, or persistent state. Firefox renders browser chrome from each manifest's `theme.colors` object; static Firefox themes cannot bundle two themes in one manifest.
+This app lives at `firefox/` in [apollo-theme/apollo-theme](https://github.com/apollo-theme/apollo-theme). It keeps its own palette snapshot, generates, checks, and tests standalone from this folder, and is validated by the root CI job `firefox`. The monorepo's root `tests/test_firefox_monorepo.py` covers the release workflow wiring. It contains **Apollo Theme** and **Apollo Light Theme** for Firefox, two separately installable static Firefox WebExtension themes using Manifest V2. There is no runtime JavaScript, background process, CSS, network access, or persistent state. Firefox renders browser chrome from each manifest's `theme.colors` object; static Firefox themes cannot bundle two themes in one manifest.
 
 Both manifests are deterministic generated output. The implementation is:
 
@@ -10,7 +10,7 @@ Both manifests are deterministic generated output. The implementation is:
 - `scripts/common.py`: variant specs, Firefox role mappings, stable identities, palette hashes, and contrast helpers.
 - `scripts/generate.py`: generates `manifest.json` and `variants/light/manifest.json`; `--check` detects drift without writing.
 - `scripts/check.py`: validates both snapshot hashes, palette membership, text contrast, restricted colors, accents, and generated output.
-- `tests/test_theme.py`: focused stdlib-only regression tests. The release tests also read the monorepo's root `.github/workflows/ci.yml` (`firefox` job), `.github/workflows/firefox-release.yml`, and `scripts/firefox_release.py`.
+- `tests/test_theme.py`: focused stdlib-only regression tests that read only files in this folder.
 
 The npm package is `apollo-theme`; `package.json` `repository` points at `https://github.com/apollo-theme/apollo-theme.git` with `directory: firefox`. The display names are `Apollo Theme` and `Apollo Light Theme`.
 
