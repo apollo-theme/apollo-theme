@@ -1,0 +1,89 @@
+# Apollo Light for eza
+# Generated from palette/apollo-light.json by scripts/generate.py; do not edit.
+# This file overrides eza UI/file-kind styles. Existing LS_COLORS/EZA_COLORS
+# still apply afterwards and retain their normal precedence.
+colourful: true
+filekinds:
+  normal: {foreground: "#3c3836"}
+  directory: {foreground: "#076678", is_bold: true}
+  symlink: {foreground: "#356b4d"}
+  pipe: {foreground: "#8a5200"}
+  block_device: {foreground: "#8f3f71"}
+  char_device: {foreground: "#8f3f71"}
+  socket: {foreground: "#6b6700"}
+  special: {foreground: "#8a5200"}
+  executable: {foreground: "#6b6700", is_bold: true}
+  mount_point: {foreground: "#076678", is_bold: true}
+perms:
+  user_read: {foreground: "#3c3836"}
+  user_write: {foreground: "#8a5200"}
+  user_execute_file: {foreground: "#6b6700"}
+  user_execute_other: {foreground: "#6b6700"}
+  group_read: {foreground: "#504945"}
+  group_write: {foreground: "#8a5200"}
+  group_execute: {foreground: "#6b6700"}
+  other_read: {foreground: "#665c54"}
+  other_write: {foreground: "#9d0006"}
+  other_execute: {foreground: "#6b6700"}
+  special_user_file: {foreground: "#9d0006", is_bold: true}
+  special_other: {foreground: "#8a5200", is_bold: true}
+  attribute: {foreground: "#356b4d"}
+size:
+  major: {foreground: "#8f3f71"}
+  minor: {foreground: "#8f3f71"}
+  number_byte: {foreground: "#665c54"}
+  number_kilo: {foreground: "#3c3836"}
+  number_mega: {foreground: "#076678"}
+  number_giga: {foreground: "#8a5200"}
+  number_huge: {foreground: "#9d0006"}
+  unit_byte: {foreground: "#665c54"}
+  unit_kilo: {foreground: "#665c54"}
+  unit_mega: {foreground: "#504945"}
+  unit_giga: {foreground: "#8a5200"}
+  unit_huge: {foreground: "#9d0006"}
+users:
+  user_you: {foreground: "#8a5200"}
+  user_root: {foreground: "#9d0006", is_bold: true}
+  user_other: {foreground: "#504945"}
+  group_yours: {foreground: "#356b4d"}
+  group_other: {foreground: "#665c54"}
+  group_root: {foreground: "#9d0006"}
+links:
+  normal: {foreground: "#665c54"}
+  multi_link_file: {foreground: "#076678"}
+git:
+  new: {foreground: "#6b6700"}
+  modified: {foreground: "#8a5200"}
+  deleted: {foreground: "#9d0006"}
+  renamed: {foreground: "#356b4d"}
+  typechange: {foreground: "#8f3f71"}
+  ignored: {foreground: "#665c54"}
+  conflicted: {foreground: "#9d0006", is_bold: true}
+git_repo:
+  branch_main: {foreground: "#8a5200", is_bold: true}
+  branch_other: {foreground: "#076678"}
+  git_clean: {foreground: "#6b6700"}
+  git_dirty: {foreground: "#8a5200"}
+file_type:
+  image: {foreground: "#8f3f71"}
+  video: {foreground: "#8f3f71"}
+  music: {foreground: "#356b4d"}
+  lossless: {foreground: "#356b4d"}
+  crypto: {foreground: "#9d0006"}
+  document: {foreground: "#504945"}
+  compressed: {foreground: "#8a5200"}
+  temp: {foreground: "#665c54"}
+  compiled: {foreground: "#9d0006"}
+  build: {foreground: "#8a5200"}
+  source: {foreground: "#076678"}
+punctuation: {foreground: "#665c54"}
+date: {foreground: "#504945"}
+inode: {foreground: "#665c54"}
+blocks: {foreground: "#665c54"}
+header: {foreground: "#8a5200", is_bold: true}
+octal: {foreground: "#8f3f71"}
+flags: {foreground: "#356b4d"}
+symlink_path: {foreground: "#356b4d"}
+control_char: {foreground: "#9d0006"}
+broken_symlink: {foreground: "#9d0006"}
+broken_path_overlay: {foreground: "#9d0006", is_underline: true}
