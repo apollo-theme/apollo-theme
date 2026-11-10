@@ -1,8 +1,10 @@
 # tmux Apollo theme development
 
-- `palette/apollo.json` and `palette/apollo-light.json` are exact canonical snapshots. Update pinned SHA-256 values only when deliberately refreshing them.
+- This app lives at `tmux/` in the `apollo-theme/apollo-theme` monorepo (<https://github.com/apollo-theme/apollo-theme/tree/main/tmux>). It is validated by the root CI job `tmux`.
+- `palette/apollo.json` and `palette/apollo-light.json` are this app's own exact snapshots of the canonical palettes. Update pinned SHA-256 values only when deliberately refreshing them.
+- It runs standalone from its folder: `cd tmux && python3 scripts/generate.py --check && python3 -m unittest discover -s tests`.
 - Edit `scripts/generate.py`, not generated `apollo.tmux` or `apollo-light.tmux`.
-- Keep both artifacts theme-only: no `bind`, prefix, status content, shell commands, plugins, or hooks. Users source exactly one variant.
+- Keep both artifacts theme-only: no `bind`, prefix, status content, shell commands, plugins, or hooks. Users source exactly one variant from the shared clone at `~/.config/apollo-theme/tmux/`.
 - Generate: `python3 scripts/generate.py`
 - Check freshness and isolated tmux options: `python3 scripts/check.py`
 - Test all: `python3 -m unittest discover -s tests -v`

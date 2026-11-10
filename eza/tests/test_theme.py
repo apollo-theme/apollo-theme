@@ -267,8 +267,8 @@ Visible style end.
                 self.assertEqual(str(caught.exception), f"README contract missing visible name {name!r}")
 
         markers = {
-            "dark activation command": 'EZA_CONFIG_DIR="$HOME/.config/eza-apollo-theme" eza --color=always -la',
-            "light activation command": 'EZA_CONFIG_DIR="$HOME/.config/eza-apollo-theme/light" eza --color=always -la',
+            "dark activation command": 'EZA_CONFIG_DIR="$HOME/.config/apollo-theme/eza" eza --color=always -la',
+            "light activation command": 'EZA_CONFIG_DIR="$HOME/.config/apollo-theme/eza/light" eza --color=always -la',
         }
         fixture = (
             "[Apollo Dark](dark) and [Apollo Light](light) remain compatible.\n"

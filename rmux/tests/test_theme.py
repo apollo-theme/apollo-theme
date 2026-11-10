@@ -266,8 +266,8 @@ Visible style end.
                 self.assertEqual(str(caught.exception), f"README contract missing visible name {name!r}")
 
         markers = {
-            "dark source command": 'rmux source-file "$HOME/.config/rmux-apollo-theme/apollo-rmux.conf"',
-            "light source command": 'rmux source-file "$HOME/.config/rmux-apollo-theme/apollo-rmux-light.conf"',
+            "dark source command": 'rmux source-file "$HOME/.config/apollo-theme/rmux/apollo-rmux.conf"',
+            "light source command": 'rmux source-file "$HOME/.config/apollo-theme/rmux/apollo-rmux-light.conf"',
             "dark status output": "bg=#141617,fg=#cfbc97",
             "light status output": "bg=#f9f5d7,fg=#3c3836",
         }
