@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-apple-terminal"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/actions/workflows/check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apple-terminal-apollo-theme/check.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
-  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/releases/latest"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/apple-terminal-apollo-theme?display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
-  <a href="https://github.com/apollo-theme/apple-terminal-apollo-theme/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=apple-terminal-v"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=apple-terminal-v*&amp;display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://support.apple.com/guide/terminal/welcome/mac"><img alt="Target: Apple Terminal on macOS" src="https://img.shields.io/badge/target-Apple%20Terminal%20%C2%B7%20macOS-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/blob/main/palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=for-the-badge&amp;labelColor=141617"></a>
 </p>
@@ -17,12 +17,27 @@
 </p>
 <p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-`Apollo.terminal` remains the existing dark profile named **Apollo**. `Apollo Light.terminal` is additive and imports as a separate **Apollo Light** profile without changing the existing default or open windows.
+**Apollo Dark** is the public name for the existing unsuffixed **Apollo** compatibility profile in `Apollo.terminal`; its native profile name remains **Apollo**. **Apollo Light** keeps its `Apollo Light.terminal` identity. `Apollo Light.terminal` is additive and imports as a separate **Apollo Light** profile without changing the existing default or open windows.
 
 ## Install
 
-1. Download `Apollo.terminal`, `Apollo Light.terminal`, or both.
-2. Double-click each desired file, or choose **Terminal → Settings → Profiles → … → Import…**.
+Clone the Apollo Theme repository once; the command is safe to rerun:
+
+```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
+```
+
+The profiles are then at `~/.config/apollo-theme/apple-terminal/Apollo.terminal` (Apollo Dark) and `~/.config/apollo-theme/apple-terminal/Apollo Light.terminal` (Apollo Light). To skip the clone, download a single file instead:
+
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/apple-terminal/Apollo.terminal
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/apple-terminal/Apollo%20Light.terminal
+
+Then import one or both profiles, either from **Terminal → Settings → Profiles → … → Import…** or by opening the files:
+
+```sh
+open "$HOME/.config/apollo-theme/apple-terminal/Apollo.terminal"
+open "$HOME/.config/apollo-theme/apple-terminal/Apollo Light.terminal"
+```
 
 Each import adds a theme-only profile. It sets no shell command and does not modify the current or default profile.
 

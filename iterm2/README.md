@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="https://apollo-theme.github.io/#app-iterm2"><img alt="Preview" src="https://img.shields.io/badge/preview-explore-fabd2f?style=for-the-badge&amp;labelColor=141617"></a>
-  <a href="https://github.com/apollo-theme/iterm2-apollo-theme/actions/workflows/check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/iterm2-apollo-theme/check.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
-  <a href="https://github.com/apollo-theme/iterm2-apollo-theme/releases/latest"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/iterm2-apollo-theme?display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
-  <a href="https://github.com/apollo-theme/iterm2-apollo-theme/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/apollo-theme/apollo-theme/ci.yml?branch=main&amp;style=for-the-badge&amp;label=CI&amp;labelColor=141617&amp;color=b8bb26"></a>
+  <a href="https://github.com/apollo-theme/apollo-theme/releases?q=iterm2-v"><img alt="Latest GitHub release" src="https://img.shields.io/github/v/release/apollo-theme/apollo-theme?filter=iterm2-v*&amp;display_name=tag&amp;sort=semver&amp;style=for-the-badge&amp;label=release&amp;labelColor=141617&amp;color=d3869b"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-83a598?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://iterm2.com/"><img alt="Target: iTerm2 on macOS" src="https://img.shields.io/badge/target-iTerm2%20%C2%B7%20macOS-fb4934?style=for-the-badge&amp;labelColor=141617"></a>
   <a href="https://github.com/apollo-theme/apollo-theme/blob/main/palette/apollo.json"><img alt="Canonical Apollo palette" src="https://img.shields.io/badge/palette-canonical-8ec07c?style=for-the-badge&amp;labelColor=141617"></a>
 </p>
@@ -17,13 +17,32 @@
 </p>
 <p align="center"><sub><strong>Simulated previews.</strong> Rendered output may vary by font and platform.</sub></p>
 
-`Apollo.itermcolors` remains the existing dark preset named **Apollo**. `Apollo Light.itermcolors` is additive; importing it creates the separate **Apollo Light** preset and does not change existing profiles.
+**Apollo Dark** is the public name for the existing unsuffixed **Apollo** compatibility preset in `Apollo.itermcolors`; its native preset name remains **Apollo**. **Apollo Light** keeps its `Apollo Light.itermcolors` identity. `Apollo Light.itermcolors` is additive; importing it creates the separate **Apollo Light** preset and does not change existing profiles.
 
 ## Install
 
-1. Download `Apollo.itermcolors`, `Apollo Light.itermcolors`, or both.
-2. In iTerm2, open **Settings → Profiles → Colors**.
-3. Open **Color Presets… → Import…** and choose each desired file.
+Clone the Apollo Theme repository once; the command is safe to rerun:
+
+```sh
+[ -d "$HOME/.config/apollo-theme/.git" ] || git clone https://github.com/apollo-theme/apollo-theme "$HOME/.config/apollo-theme"
+```
+
+The presets are then at `~/.config/apollo-theme/iterm2/Apollo.itermcolors` (Apollo Dark) and `~/.config/apollo-theme/iterm2/Apollo Light.itermcolors` (Apollo Light). To skip the clone, download a single file instead:
+
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/iterm2/Apollo.itermcolors
+- https://raw.githubusercontent.com/apollo-theme/apollo-theme/main/iterm2/Apollo%20Light.itermcolors
+
+Then import one or both presets:
+
+1. In iTerm2, open **Settings → Profiles → Colors**.
+2. Open **Color Presets… → Import…** and choose `~/.config/apollo-theme/iterm2/Apollo.itermcolors`, `~/.config/apollo-theme/iterm2/Apollo Light.itermcolors`, or the downloaded copy.
+
+Alternatively, open a preset file directly, which also imports it:
+
+```sh
+open "$HOME/.config/apollo-theme/iterm2/Apollo.itermcolors"
+open "$HOME/.config/apollo-theme/iterm2/Apollo Light.itermcolors"
+```
 
 Importing presets does not activate them or modify current profile colors.
 
