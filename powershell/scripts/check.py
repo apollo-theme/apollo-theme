@@ -220,8 +220,8 @@ def validate_static() -> None:
     if "$PROFILE" in text:
         raise AssertionError("module must not rewrite or reference $PROFILE")
     manifest = MANIFEST.read_text(encoding="utf-8")
-    if "ModuleVersion = '0.2.0'" not in manifest:
-        raise AssertionError("module version must be 0.2.0")
+    if "ModuleVersion = '0.2.1'" not in manifest:
+        raise AssertionError("module version must be 0.2.1")
     if "GUID = '5c88f42f-5dbf-45f5-8514-6f99cb3b628e'" not in manifest:
         raise AssertionError("module GUID changed")
 

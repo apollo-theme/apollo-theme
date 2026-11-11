@@ -267,8 +267,8 @@ def main() -> int:
     if package.get("contributes", {}).get("themes") != expected_contributions:
         fail("package must contribute exactly Apollo/vs-dark and Apollo Light/vs")
     versions = (package.get("version"), lock.get("version"), lock.get("packages", {}).get("", {}).get("version"))
-    if versions != ("0.2.0", "0.2.0", "0.2.0"):
-        fail(f"package and lock versions must all be 0.2.0, got {versions}")
+    if versions != ("0.2.1", "0.2.1", "0.2.1"):
+        fail(f"package and lock versions must all be 0.2.1, got {versions}")
 
     counts = [validate_variant(*variant) for variant in VARIANTS]
     print(

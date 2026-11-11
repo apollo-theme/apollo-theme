@@ -53,7 +53,7 @@ RELEASE_DISCLAIMER = (
     "to AMO."
 )
 MARKETPLACE_DISCLAIMER = (
-    "This repository makes no claim that version 1.1.1 of either theme is available "
+    "This repository makes no claim that version 1.1.2 of either theme is available "
     "from the marketplace."
 )
 DARK_SIGNING_COMMAND = (

@@ -36,7 +36,7 @@ class ApolloPowerShellThemeTests(unittest.TestCase):
         self.assertIn("$Options.PSObject.Properties[$entry.Value]", module)
         self.assertIn("if ($null -eq $script:ApolloPreviousColors)", module)
         self.assertIn("Set-PSReadLineOption -Colors $supportedColors", module)
-        self.assertIn("ModuleVersion = '0.2.0'", generate.render_manifest())
+        self.assertIn("ModuleVersion = '0.2.1'", generate.render_manifest())
         self.assertIn("GUID = '5c88f42f-5dbf-45f5-8514-6f99cb3b628e'", generate.render_manifest())
         check.validate_static()
 

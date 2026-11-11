@@ -1,14 +1,18 @@
 name: App release
-on: { push: { tags: ["*-v*", "!firefox-v*"] } }
+on:
+  push: { tags: ["**", "!firefox-v*"] }
+  # Re-run a tag whose push did not start this workflow (see CLAUDE.md Releases).
+  workflow_dispatch: { inputs: { tag: { description: "Existing <app>-vX.Y.Z tag to release", required: true, type: string } } }
 permissions: { contents: write }
+env: { TAG: "${{ inputs.tag || github.ref_name }}" }
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - { uses: actions/checkout@v4, with: { fetch-depth: 0 } }
+      - { uses: actions/checkout@v4, with: { ref: "${{ env.TAG }}", fetch-depth: 0 } }
       - { uses: actions/setup-python@v5, with: { python-version: "3.11" } }
-      - name: Resolve app folder
-        run: echo "APP=${GITHUB_REF_NAME%-v*}" >> "$GITHUB_ENV"
+      - name: Check tag is <app>-vX.Y.Z for a known app
+        run: python3 scripts/app_release.py --check-tag "$TAG" --github-env "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         if: env.APP == 'vscode'
         with: { node-version: "22", cache: npm, cache-dependency-path: vscode/package-lock.json }
@@ -18,6 +22,6 @@ jobs:
       - run: python3 scripts/generate.py --check --app "$APP" && python3 scripts/check.py --app "$APP"
       - run: python3 -m unittest discover -s tests -v
         working-directory: ${{ env.APP }}
-      - run: python3 scripts/app_release.py --dry-run "$GITHUB_REF_NAME" --out release-assets --notes-out RELEASE_NOTES.md
+      - run: python3 scripts/app_release.py --dry-run "$TAG" --out release-assets --notes-out RELEASE_NOTES.md
       - uses: softprops/action-gh-release@v2
-        with: { name: "Apollo Themes for ${{ env.APP }} ${{ github.ref_name }}", body_path: RELEASE_NOTES.md, fail_on_unmatched_files: true, files: "release-assets/*" }
+        with: { tag_name: "${{ env.TAG }}", name: "Apollo Themes for ${{ env.APP_NAME }} ${{ env.TAG }}", body_path: RELEASE_NOTES.md, fail_on_unmatched_files: true, files: "release-assets/*" }
