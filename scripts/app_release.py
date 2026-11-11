@@ -18,8 +18,9 @@ from common import APPS, ROOT
 
 TAG_PATTERN = re.compile(r"([a-z0-9-]+)-v(\d+\.\d+\.\d+)")
 REPOSITORY = "apollo-theme/apollo-theme"
-# Files left out of every app zip: generation, tests, and repository plumbing.
-DEV_PARTS = {"scripts", "tests", "palette", ".github", "CLAUDE.md", ".gitignore", ".gitattributes", ".vscodeignore", "package-lock.json"}
+# Files left out of every app zip: generation, tests, repository plumbing, and
+# any dot-prefixed path.
+DEV_PARTS = {"scripts", "tests", "palette", "CLAUDE.md", "package-lock.json"}
 ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 
 # Source file (relative to the app folder) -> release asset name. GitHub rewrites
@@ -74,7 +75,10 @@ def check_version(slug: str, version: str) -> None:
 def shippable_files(slug: str) -> list[str]:
     listed = subprocess.run(["git", "ls-files", "-z", "--", slug], cwd=ROOT, check=True, capture_output=True).stdout
     relative = (Path(name).relative_to(slug) for name in listed.decode("utf-8").split("\0") if name)
-    return sorted(path.as_posix() for path in relative if not DEV_PARTS & set(path.parts))
+    return sorted(
+        path.as_posix() for path in relative
+        if not DEV_PARTS & set(path.parts) and not any(part.startswith(".") for part in path.parts)
+    )
 
 
 def build_zip(slug: str, version: str, out: Path) -> Path:
@@ -84,6 +88,7 @@ def build_zip(slug: str, version: str, out: Path) -> Path:
         for name in shippable_files(slug):
             info = zipfile.ZipInfo(f"{prefix}/{name}", date_time=ZIP_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3  # Unix, so the bytes match on every build platform
             info.external_attr = 0o644 << 16
             archive.writestr(info, (ROOT / slug / name).read_bytes())
     return path
@@ -136,10 +141,17 @@ def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
 
 
 def previous_tag(tag: str, slug: str, root: Path = ROOT) -> str:
-    listed = _git(root, "tag", "--list", f"{slug}-v*", "--merged", f"{tag}^", "--sort=-version:refname")
+    # Search through the tag itself so an earlier release on the same commit counts.
+    listed = _git(root, "tag", "--list", f"{slug}-v*", "--merged", tag, "--sort=-version:refname")
     if listed.returncode != 0:
         return ""
-    return next((name for name in listed.stdout.split() if name != tag), "")
+    current = _version_key(tag)
+    return next((name for name in listed.stdout.split() if _version_key(name) < current), "")
+
+
+def _version_key(tag: str) -> tuple[int, ...]:
+    match = TAG_PATTERN.fullmatch(tag)
+    return tuple(int(part) for part in match.group(2).split(".")) if match else (-1,)
 
 
 def release_notes(tag: str, root: Path = ROOT) -> str:

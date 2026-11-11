@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -94,6 +95,20 @@ class ZipTests(unittest.TestCase):
             b = build_zip("iterm2", "1.0.0", Path(second)).read_bytes()
         self.assertEqual(a, b)
 
+    def test_zip_bytes_do_not_depend_on_build_platform(self):
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            with mock.patch.object(zipfile.sys, "platform", "win32"):
+                a = build_zip("vim", "1.0.0", Path(first)).read_bytes()
+            with mock.patch.object(zipfile.sys, "platform", "darwin"):
+                b = build_zip("vim", "1.0.0", Path(second)).read_bytes()
+        self.assertEqual(a, b)
+
+    def test_dot_paths_are_never_shipped(self):
+        listed = b"vim/.editorconfig\0vim/.cache/file\0vim/colors/apollo.vim\0"
+        result = subprocess.CompletedProcess([], 0, stdout=listed)
+        with mock.patch.object(app_release.subprocess, "run", return_value=result):
+            self.assertEqual(["colors/apollo.vim"], app_release.shippable_files("vim"))
+
     def test_every_zip_holds_shippable_files_only(self):
         with tempfile.TemporaryDirectory() as out:
             for slug in RELEASED:
@@ -173,6 +188,21 @@ class NotesTests(unittest.TestCase):
         self.assertNotIn("Old vim change", notes)
         self.assertNotIn("Unrelated tmux change", notes)
         self.assertIn("compare/vim-v1.0.0...vim-v1.1.0", notes)
+
+    def test_previous_tag_on_same_commit_is_found(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git("init", "-q", cwd=repo)
+            commit_file(repo, "vim/a.txt", "First vim change")
+            git("tag", "vim-v1.0.0", cwd=repo)
+            commit_file(repo, "vim/b.txt", "Second vim change")
+            git("tag", "vim-v1.1.0", cwd=repo)
+            git("tag", "vim-v1.1.1", cwd=repo)
+            notes = release_notes("vim-v1.1.1", root=repo)
+            older = release_notes("vim-v1.1.0", root=repo)
+        self.assertIn("Commits since vim-v1.1.0", notes)
+        self.assertNotIn("Second vim change", notes)
+        self.assertIn("Commits since vim-v1.0.0", older)
 
     def test_imported_tags_without_folder_list_root_commits(self):
         with tempfile.TemporaryDirectory() as tmp:
