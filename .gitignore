@@ -4,3 +4,5 @@ __pycache__/
 .build/
 .dist/
 .claude/
+release-assets/
+RELEASE_NOTES.md

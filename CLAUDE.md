@@ -31,6 +31,8 @@ Rollbacks are new commits; do not rewrite published history or move published ta
 
 Each app is released independently with tags of the form `<slug>-vX.Y.Z` (`<slug>-v*`). Pushing a `firefox-v*` tag runs `.github/workflows/firefox-release.yml`, which validates and builds through `scripts/firefox_release.py` and publishes unsigned ZIPs as a GitHub release. `python3 scripts/firefox_release.py --dry-run firefox-vX.Y.Z` performs the same validation locally without publishing.
 
+Every other `<slug>-v*` tag runs `.github/workflows/app-release.yml`: it runs that app's gate, then `scripts/app_release.py` builds the assets and the workflow publishes them as a GitHub release. Assets are the space-free raw files in `RAW_ASSETS` (a file is attached raw only when it imports as-is, so the Light themes for iTerm2, Xcode, bat, and eza ship only in the zip), `apollo-<slug>-<version>.zip` of the app folder without generators, tests, or palette snapshots, the VSIX for `vscode`, and `SHA256SUMS`. `python3 scripts/app_release.py --dry-run <slug>-vX.Y.Z --out <dir>` builds the same assets locally; CI runs `--check-all` on pull requests and `main`. The script refuses a non-empty output directory and fails unless the output holds exactly the expected assets. For `vscode` and `powershell` the tag version must match `package.json` / `ModuleVersion`.
+
 ## Commands
 
 Generate all native artifacts, or fail if committed artifacts are stale:
