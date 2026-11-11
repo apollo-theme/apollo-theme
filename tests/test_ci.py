@@ -53,6 +53,20 @@ class CiTests(unittest.TestCase):
     def test_firefox_release_triggers_on_prefixed_tags(self):
         self.assertIn('"firefox-v*"', (WORKFLOWS / "firefox-release.yml").read_text(encoding="utf-8"))
 
+    def test_release_job_builds_every_app(self):
+        self.assertIn("app_release.py --check-all", jobs()["release"])
+
+    def test_app_release_covers_every_tag_but_firefox(self):
+        text = (WORKFLOWS / "app-release.yml").read_text(encoding="utf-8")
+        self.assertIn('tags: ["*-v*", "!firefox-v*"]', text)
+        self.assertIn('app_release.py --dry-run "$GITHUB_REF_NAME"', text)
+        self.assertIn("fail_on_unmatched_files: true", text)
+        self.assertNotIn("gh release", text)
+        self.assertIn("permissions: { contents: write }", text)
+        self.assertIn("fetch-depth: 0", text)
+        self.assertIn("body_path: RELEASE_NOTES.md", text)
+        self.assertIn('files: "release-assets/*"', text)
+
     def test_vscode_package_points_at_monorepo(self):
         package = json.loads((ROOT / "vscode" / "package.json").read_text(encoding="utf-8"))
         script = package["scripts"]["package"]
