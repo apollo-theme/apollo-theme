@@ -24,7 +24,7 @@
 | --- | --- | --- |
 | Official display name | **Apollo Theme** | **Apollo Light Theme** |
 | Source manifest | `manifest.json` | `variants/light/manifest.json` |
-| Version | `1.1.1` | `1.1.1` |
+| Version | `1.1.2` | `1.1.2` |
 | Gecko GUID | `humble-apollo@d0n9x1n` | `apollo-light@d0n9x1n` |
 
 **Apollo Dark** uses the official display name **Apollo Theme** and immutable Gecko GUID **humble-apollo@d0n9x1n**. **Apollo Light** uses the official display name **Apollo Light Theme** and Gecko GUID **apollo-light@d0n9x1n**.
@@ -111,7 +111,7 @@ npx web-ext sign --source-dir variants/light --channel listed \
   --api-secret "$AMO_JWT_SECRET"
 ```
 
-`--channel listed` publishes to AMO; use `--channel unlisted` only for a signed, self-distributed XPI. The latest GitHub Release does not imply that either variant has been published to AMO. This repository makes no claim that version 1.1.1 of either theme is available from the marketplace.
+`--channel listed` publishes to AMO; use `--channel unlisted` only for a signed, self-distributed XPI. The latest GitHub Release does not imply that either variant has been published to AMO. This repository makes no claim that version 1.1.2 of either theme is available from the marketplace.
 
 To uninstall either variant, open `about:addons`, select **Themes**, switch to another theme, then remove **Apollo Theme** or **Apollo Light Theme**.
 

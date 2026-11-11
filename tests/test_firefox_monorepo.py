@@ -48,7 +48,7 @@ class FirefoxReleaseWiringTests(unittest.TestCase):
     def test_release_workflow_uses_target_qualified_name(self) -> None:
         self.assertIn('tags: ["firefox-v*"]', self.workflow)
         self.assertIn("working-directory: firefox", self.workflow)
-        self.assertIn('name: "Apollo Themes for Firefox ${{ github.ref_name }}"', self.workflow)
+        self.assertIn('name: "Apollo Themes for Firefox ${{ env.TAG }}"', self.workflow)
         # Release notes need tag history that shallow CI checkouts lack, so pin the heading template.
         script = (ROOT / "scripts" / "firefox_release.py").read_text(encoding="utf-8")
         self.assertIn('f"## Apollo Themes for Firefox {tag}"', script)

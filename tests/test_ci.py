@@ -22,6 +22,33 @@ def jobs() -> dict[str, str]:
     return dict(zip(parts[1::2], parts[2::2]))
 
 
+def actions_glob(pattern: str, ref: str) -> bool:
+    """GitHub Actions filter globbing: `*` stops at `/`, `**` crosses it."""
+    regex = ""
+    i = 0
+    while i < len(pattern):
+        if pattern.startswith("**", i):
+            regex, i = regex + ".*", i + 2
+        elif pattern[i] == "*":
+            regex, i = regex + "[^/]*", i + 1
+        else:
+            regex, i = regex + re.escape(pattern[i]), i + 1
+    return re.fullmatch(regex, ref) is not None
+
+
+def tag_triggers(text: str, tag: str) -> bool:
+    match = re.search(r"tags: \[([^\]]*)\]", text)
+    if not match:
+        return False
+    included = False
+    for pattern in re.findall(r'"([^"]+)"', match.group(1)):
+        if pattern.startswith("!"):
+            included = included and not actions_glob(pattern[1:], tag)
+        else:
+            included = included or actions_glob(pattern, tag)
+    return included
+
+
 class CiTests(unittest.TestCase):
     def test_every_app_has_a_job(self):
         self.assertLessEqual({"validate", "smoke", *SLUGS}, set(jobs()))
@@ -58,14 +85,52 @@ class CiTests(unittest.TestCase):
 
     def test_app_release_covers_every_tag_but_firefox(self):
         text = (WORKFLOWS / "app-release.yml").read_text(encoding="utf-8")
-        self.assertIn('tags: ["*-v*", "!firefox-v*"]', text)
-        self.assertIn('app_release.py --dry-run "$GITHUB_REF_NAME"', text)
+        self.assertIn('tags: ["**", "!firefox-v*"]', text)
+        self.assertIn('app_release.py --dry-run "$TAG"', text)
         self.assertIn("fail_on_unmatched_files: true", text)
         self.assertNotIn("gh release", text)
         self.assertIn("permissions: { contents: write }", text)
         self.assertIn("fetch-depth: 0", text)
         self.assertIn("body_path: RELEASE_NOTES.md", text)
         self.assertIn('files: "release-assets/*"', text)
+        self.assertIn("${{ env.APP_NAME }}", text)
+
+    def test_every_tag_push_runs_exactly_one_release_workflow(self):
+        workflows = {path.name: path.read_text(encoding="utf-8") for path in WORKFLOWS.glob("*.yml")}
+        expected = {f"{slug}-v1.2.3": "firefox-release.yml" if slug == "firefox" else "app-release.yml" for slug in SLUGS}
+        for tag in ("v1.2.3", "not-an-app", "release/v1.2.3", "a/b/c", "firefox-v1.2", "firefox-vX"):
+            expected[tag] = "firefox-release.yml" if tag.startswith("firefox-v") else "app-release.yml"
+        for tag, workflow in expected.items():
+            with self.subTest(tag=tag):
+                self.assertEqual([workflow], [name for name, text in workflows.items() if tag_triggers(text, tag)])
+
+    def test_tag_glob_follows_actions_semantics(self):
+        self.assertFalse(actions_glob("*", "release/v1"))
+        self.assertTrue(actions_glob("**", "release/v1"))
+        self.assertTrue(actions_glob("firefox-v*", "firefox-v1.2.3"))
+        self.assertFalse(actions_glob("firefox-v*", "x/firefox-v1"))
+
+    def test_every_release_attaches_checksums(self):
+        self.assertIn("release-assets/*", (WORKFLOWS / "app-release.yml").read_text(encoding="utf-8"))
+        self.assertIn("firefox/web-ext-artifacts/SHA256SUMS", (WORKFLOWS / "firefox-release.yml").read_text(encoding="utf-8"))
+
+    def test_release_workflows_check_tag_first(self):
+        app = (WORKFLOWS / "app-release.yml").read_text(encoding="utf-8")
+        firefox = (WORKFLOWS / "firefox-release.yml").read_text(encoding="utf-8")
+        app_check = app.index('app_release.py --check-tag "$TAG" --github-env "$GITHUB_ENV"')
+        self.assertLess(app_check, app.index("generate.py --check"))
+        firefox_check = firefox.index('firefox_release.py --dry-run "$TAG" --skip-build')
+        self.assertLess(firefox_check, firefox.index("npm ci"))
+
+    def test_missed_tags_can_be_released_through_ci(self):
+        for name in ("app-release.yml", "firefox-release.yml"):
+            text = (WORKFLOWS / name).read_text(encoding="utf-8")
+            with self.subTest(workflow=name):
+                self.assertIn("workflow_dispatch:", text)
+                self.assertIn('TAG: "${{ inputs.tag || github.ref_name }}"', text)
+                self.assertIn('ref: "${{ env.TAG }}"', text)
+                self.assertIn('tag_name: "${{ env.TAG }}"', text)
+                self.assertNotIn("GITHUB_REF_NAME", text)
 
     def test_vscode_package_points_at_monorepo(self):
         package = json.loads((ROOT / "vscode" / "package.json").read_text(encoding="utf-8"))

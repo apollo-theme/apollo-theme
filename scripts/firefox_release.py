@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from app_release import write_checksums
+
 ROOT = Path(__file__).resolve().parents[1]
 FIREFOX = ROOT / "firefox"
 TAG_PATTERN = re.compile(r"firefox-v(\d+\.\d+\.\d+)")
@@ -107,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             missing = [str(path) for path in paths if not path.is_file()]
             if missing:
                 raise ValueError("missing release attachments: " + ", ".join(missing))
+            paths.append(write_checksums(paths, paths[0].parent))
         if args.notes_out:
             args.notes_out.write_text(release_notes(tag), encoding="utf-8")
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

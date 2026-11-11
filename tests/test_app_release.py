@@ -76,8 +76,9 @@ class RawAssetTests(unittest.TestCase):
 
 class VersionTests(unittest.TestCase):
     def test_declared_versions_match_current(self):
-        check_version("vscode", "0.2.0")
-        check_version("powershell", "0.2.0")
+        for slug in ("vscode", "powershell"):
+            (version,) = app_release.declared_versions(slug).values()
+            check_version(slug, version)
 
     def test_mismatch_names_source(self):
         for slug, source in (("vscode", "package.json"), ("powershell", "ApolloTheme.psd1")):
@@ -229,6 +230,23 @@ class MainTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as out, contextlib.redirect_stderr(stderr):
             self.assertEqual(1, main(["--dry-run", "firefox-v1.1.1", "--out", out]))
         self.assertIn("error:", stderr.getvalue())
+
+    def test_check_tag_writes_app_to_github_env(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = Path(tmp) / "env"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, main(["--check-tag", "apple-terminal-v1.0.0", "--github-env", str(env)]))
+            self.assertEqual("APP=apple-terminal\nAPP_NAME=Apple Terminal\n", env.read_text(encoding="utf-8"))
+
+    def test_check_tag_rejects_non_app_and_mismatched_tags(self):
+        for tag in ("v0.4.0", "not-an-app", "emacs-v1.0.0", "vim-v1.0", "firefox-v9.9.9", "vscode-v9.9.9"):
+            with self.subTest(tag=tag), tempfile.TemporaryDirectory() as tmp:
+                env = Path(tmp) / "env"
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    self.assertEqual(1, main(["--check-tag", tag, "--github-env", str(env)]))
+                self.assertIn("error:", stderr.getvalue())
+                self.assertFalse(env.exists())
 
     def test_check_all_builds_every_released_app(self):
         stdout = io.StringIO()

@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "1.1.1",
+  "version": "1.1.2",
   "name": "Apollo Light Theme",
   "description": "A high-contrast light Firefox theme generated from the canonical Apollo Light palette.",
   "browser_specific_settings": {

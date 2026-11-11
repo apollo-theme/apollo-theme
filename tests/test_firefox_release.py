@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import io
 import json
 import shutil
@@ -15,6 +16,7 @@ import firefox_release  # noqa: E402
 from firefox_release import build, check_gecko_ids, check_versions, main, release_notes, version_from_tag  # noqa: E402
 
 FIREFOX = ROOT / "firefox"
+CURRENT = json.loads((FIREFOX / "package.json").read_text(encoding="utf-8"))["version"]
 
 
 def git(*args: str, cwd: Path) -> str:
@@ -46,7 +48,7 @@ class TagTests(unittest.TestCase):
 
 class VersionTests(unittest.TestCase):
     def test_current_versions_match(self):
-        check_versions(FIREFOX, "1.1.1")
+        check_versions(FIREFOX, CURRENT)
 
     def test_mismatch_names_every_source(self):
         with self.assertRaises(ValueError) as caught:
@@ -178,7 +180,7 @@ class MainTests(unittest.TestCase):
         self.assertIn("tag must look like firefox-vX.Y.Z", err)
 
     def test_current_tag_passes(self):
-        code, out, _ = self.run_main(["--dry-run", "firefox-v1.1.1", "--skip-build"])
+        code, out, _ = self.run_main(["--dry-run", f"firefox-v{CURRENT}", "--skip-build"])
         self.assertEqual(0, code)
         self.assertIn("attachments:", out)
 
@@ -190,11 +192,35 @@ class MainTests(unittest.TestCase):
 
         firefox_release.build = no_output_build
         try:
-            code, _, err = self.run_main(["--dry-run", "firefox-v1.1.1"])
+            code, _, err = self.run_main(["--dry-run", f"firefox-v{CURRENT}"])
         finally:
             firefox_release.build = original
         self.assertEqual(1, code)
         self.assertIn("missing-dark.zip", err)
+
+    def test_build_writes_checksums_for_both_zips(self):
+        original = firefox_release.build
+
+        def fake_build(directory, run=subprocess.run):
+            out = Path(self.tmp) / "web-ext-artifacts"
+            out.mkdir(exist_ok=True)
+            for name in firefox_release.ARTIFACTS:
+                (out / name).write_bytes(name.encode())
+            return [out / name for name in firefox_release.ARTIFACTS]
+
+        firefox_release.build = fake_build
+        try:
+            with tempfile.TemporaryDirectory() as self.tmp:
+                code, out, _ = self.run_main(["--dry-run", f"firefox-v{CURRENT}"])
+                sums = (Path(self.tmp) / "web-ext-artifacts" / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+        finally:
+            firefox_release.build = original
+        self.assertEqual(0, code)
+        self.assertIn("SHA256SUMS", out)
+        self.assertEqual(sorted(firefox_release.ARTIFACTS), [line.split("  ", 1)[1] for line in sums])
+        for line in sums:
+            digest, name = line.split("  ", 1)
+            self.assertEqual(hashlib.sha256(name.encode()).hexdigest(), digest)
 
     def test_dry_run_is_required(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
@@ -205,9 +231,10 @@ class WorkflowTests(unittest.TestCase):
     def test_workflow_never_calls_gh_and_uses_script(self):
         text = (ROOT / ".github" / "workflows" / "firefox-release.yml").read_text(encoding="utf-8")
         self.assertIn('tags: ["firefox-v*"]', text)
-        self.assertIn('python3 ../scripts/firefox_release.py --dry-run "$GITHUB_REF_NAME" --notes-out RELEASE_NOTES.md', text)
+        self.assertIn('python3 ../scripts/firefox_release.py --dry-run "$TAG" --notes-out RELEASE_NOTES.md', text)
         self.assertIn("firefox/web-ext-artifacts/apollo-theme.zip", text)
         self.assertIn("firefox/web-ext-artifacts/apollo-light-theme.zip", text)
+        self.assertIn("firefox/web-ext-artifacts/SHA256SUMS", text)
         self.assertNotIn("gh release", text)
 
 

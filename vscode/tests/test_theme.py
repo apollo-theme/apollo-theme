@@ -239,7 +239,7 @@ Apollo Light
                 {"label": "Apollo Light", "uiTheme": "vs", "path": "./themes/apollo-light-color-theme.json"},
             ],
         )
-        self.assertEqual((package["version"], lock["version"], lock["packages"][""]["version"]), ("0.2.0",) * 3)
+        self.assertEqual((package["version"], lock["version"], lock["packages"][""]["version"]), ("0.2.1",) * 3)
 
     def test_check_rejects_unexpected_generated_output(self) -> None:
         unexpected = ROOT / "themes" / "unexpected-color-theme.json"

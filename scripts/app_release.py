@@ -186,13 +186,23 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", metavar="TAG", help="release tag, e.g. iterm2-v0.2.0")
+    mode.add_argument("--check-tag", metavar="TAG", help="validate a pushed tag before any build step")
     mode.add_argument("--check-all", action="store_true", help="build every app's assets (no VSIX) into a temporary directory")
     parser.add_argument("--out", type=Path, default=ROOT / "release-assets", help="directory for the release assets")
     parser.add_argument("--notes-out", type=Path, help="write release notes to this path")
+    parser.add_argument("--github-env", type=Path, help="with --check-tag, append APP and APP_NAME to this file")
     args = parser.parse_args(argv)
     try:
         if args.check_all:
             check_all()
+            return 0
+        if args.check_tag:
+            slug, version = parse_tag(args.check_tag)
+            check_version(slug, version)
+            if args.github_env:
+                with args.github_env.open("a", encoding="utf-8") as env:
+                    env.write(f"APP={slug}\nAPP_NAME={APPS[slug]['name']}\n")
+            print(f"tag {args.check_tag}: {APPS[slug]['name']} {version}")
             return 0
         slug, version = parse_tag(args.dry_run)
         check_version(slug, version)

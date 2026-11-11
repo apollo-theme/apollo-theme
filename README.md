@@ -92,7 +92,7 @@ python3 scripts/check.py
 
 ## Releases
 
-Each app is released independently with a tag of the form `<slug>-vX.Y.Z`, for example `firefox-v1.1.1`. Pushing a tag publishes that app's release through CI: Firefox attaches its unsigned add-on ZIPs, and every other app attaches its importable theme files, a ZIP of its folder, and `SHA256SUMS` (Visual Studio Code also attaches a VSIX). Filter the [releases page](https://github.com/apollo-theme/apollo-theme/releases) by an app's prefix to see its history.
+Each app is released independently with a tag of the form `<slug>-vX.Y.Z`, for example `firefox-v1.1.1`. Every tag push publishes that app's release through CI, and releases are never made by hand: Firefox attaches its unsigned add-on ZIPs, every other app attaches its importable theme files and a ZIP of its folder (Visual Studio Code also attaches a VSIX), and every release includes `SHA256SUMS`. A tag that is not `<slug>-vX.Y.Z` for a known app fails its release run. Filter the [releases page](https://github.com/apollo-theme/apollo-theme/releases) by an app's prefix to see its history.
 
 ## Lineage
 

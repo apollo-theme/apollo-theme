@@ -29,7 +29,7 @@ RELEASE_DISCLAIMER = (
     "to AMO."
 )
 MARKETPLACE_DISCLAIMER = (
-    "This repository makes no claim that version 1.1.1 of either theme is available "
+    "This repository makes no claim that version 1.1.2 of either theme is available "
     "from the marketplace."
 )
 DARK_SIGNING_COMMAND = (
@@ -119,7 +119,7 @@ class ThemeTests(unittest.TestCase):
         light_manifest = json.loads(
             common.LIGHT_VARIANT.manifest_path.read_text(encoding="utf-8")
         )
-        self.assertEqual("1.1.1", self.package["version"])
+        self.assertEqual("1.1.2", self.package["version"])
         self.assertEqual(
             {self.package["version"]},
             {self.manifest["version"], light_manifest["version"]},
@@ -512,7 +512,7 @@ Visible after
             "previews/firefox-light.svg",
             "unsigned ZIPs",
             "not Mozilla-signed XPIs",
-            "version 1.1.1",
+            "version 1.1.2",
             "Both manifests are generated",
             "remove **Apollo Theme** or **Apollo Light Theme**",
         ):
