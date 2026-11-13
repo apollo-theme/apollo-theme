@@ -23,6 +23,8 @@ EXPECTED_TOP_LEVEL = {"schemaVersion", "id", "name", "description", "appearance"
 EXPECTED_THEME_KEYS = {"name", "appearance", "colors"}
 EXPECTED_COLOR_KEYS = {"background", "foreground", "cursor", "cursor_text", "selection_bg", "selection_fg", "ansi", "bright", "tab"}
 EXPECTED_TAB_KEYS = {"bar_bg", "active_bg", "active_fg", "inactive_bg", "inactive_fg", "hover_bg", "hover_fg", "close_button_fg"}
+# SonicTerm-only chrome: Apollo Dark's tab bar sits darker than the canvas.
+EXPECTED_BAR_BG = {"apollo": "#101010"}
 README_MARKERS = ('theme = "apollo"', 'theme = "apollo-light"')
 
 
@@ -217,7 +219,7 @@ def validate_theme(theme: dict[str, Any], palette: dict[str, Any]) -> None:
     require([colors["ansi"][name] for name in COLOR_NAMES] == terminal["ansi"], f"{palette['id']} ANSI palette drift")
     require([colors["bright"][name] for name in COLOR_NAMES] == terminal["bright"], f"{palette['id']} bright palette drift")
     require(colors["tab"] == {
-        "bar_bg": canonical["background"],
+        "bar_bg": EXPECTED_BAR_BG.get(palette["id"], canonical["background"]),
         "active_bg": canonical["background"],
         "active_fg": canonical["accent"],
         "inactive_bg": canonical["background"],

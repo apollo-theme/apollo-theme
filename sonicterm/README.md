@@ -63,7 +63,7 @@ Removing one variant does not affect the other.
 
 ## Visual check
 
-For each installed variant, open tabs in active, inactive, and hover states, select text, and print ANSI colors 0–15. Apollo Dark should retain its `#141617` canvas and yellow cursor. Apollo Light should use the `#f9f5d7` paper canvas, dark `#3c3836` text, and brown `#8a5200` cursor. In both, confirm readable cursor and selection text plus the exact ordered normal/bright arrays in the matching palette snapshot. Automated checks validate files and values, not rendered pixels.
+For each installed variant, open tabs in active, inactive, and hover states, select text, and print ANSI colors 0–15. Apollo Dark should retain its `#141617` canvas, a darker `#101010` tab bar, and yellow cursor. Apollo Light should use the `#f9f5d7` paper canvas, dark `#3c3836` text, and brown `#8a5200` cursor. In both, confirm readable cursor and selection text plus the exact ordered normal/bright arrays in the matching palette snapshot. Automated checks validate files and values, not rendered pixels.
 
 ## Development
 

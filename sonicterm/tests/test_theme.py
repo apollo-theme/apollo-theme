@@ -19,6 +19,8 @@ VARIANTS = (
     ("apollo-light", "Apollo Light", "light", ROOT / "palette" / "apollo-light.json", ROOT / "apollo-light.toml"),
 )
 README_MARKERS = ('theme = "apollo"', 'theme = "apollo-light"')
+# SonicTerm-only chrome: Apollo Dark's tab bar sits darker than the canvas.
+EXPECTED_BAR_BG = {"apollo": "#101010"}
 
 
 def load_generator():
@@ -275,7 +277,7 @@ trailing visible text
                 tab = tomllib.loads(artifact_path.read_text(encoding="utf-8"))["colors"]["tab"]
                 colors = palette["colors"]
                 self.assertEqual(tab, {
-                    "bar_bg": colors["background"],
+                    "bar_bg": EXPECTED_BAR_BG.get(palette_id, colors["background"]),
                     "active_bg": colors["background"],
                     "active_fg": colors["accent"],
                     "inactive_bg": colors["background"],
@@ -284,6 +286,14 @@ trailing visible text
                     "hover_fg": colors["foregroundSecondary"],
                     "close_button_fg": colors["accent"],
                 })
+
+    def test_checker_rejects_canvas_bar_on_dark(self):
+        palette_path, artifact_path = VARIANTS[0][3], VARIANTS[0][4]
+        palette = json.loads(palette_path.read_text(encoding="utf-8"))
+        theme = tomllib.loads(artifact_path.read_text(encoding="utf-8"))
+        theme["colors"]["tab"]["bar_bg"] = palette["colors"]["background"]
+        with self.assertRaisesRegex(ValueError, "tab palette drift"):
+            load_checker().validate_theme(theme, palette)
 
     def test_generator_is_deterministic(self):
         generator = load_generator()
