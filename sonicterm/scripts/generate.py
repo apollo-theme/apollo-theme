@@ -15,6 +15,8 @@ OUTPUTS = {
     ROOT / "apollo-light.toml": ROOT / "palette" / "apollo-light.json",
 }
 COLOR_NAMES = ("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white")
+# SonicTerm-only chrome: Apollo Dark's tab bar sits darker than the canvas.
+BAR_BG = {"apollo": "#101010"}
 
 
 def load_palette(path: Path) -> dict[str, Any]:
@@ -53,7 +55,7 @@ def render(palette: dict[str, Any]) -> str:
         *(assignment(name, bright[name]) for name in COLOR_NAMES),
         "",
         "[colors.tab]",
-        assignment("bar_bg", colors["background"]),
+        assignment("bar_bg", BAR_BG.get(palette["id"], colors["background"])),
         assignment("active_bg", colors["background"]),
         assignment("active_fg", colors["accent"]),
         assignment("inactive_bg", colors["background"]),
